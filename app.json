@@ -8,7 +8,6 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./src/assets/penny_pilot_logo_no_bg.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,15 +20,24 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.vinicius_scooper.PennyPilot"
     },
     "web": {
-      "output": "server",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font",
       "expo-image-picker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "8e641aa2-fe63-48a8-9c26-1cfe545040f4"
+      }
+    },
+    "owner": "vinicius_scooper"
   }
 }
