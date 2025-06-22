@@ -1,5 +1,5 @@
 // Tela de Perfil: permite ao usuário visualizar e editar seus dados pessoais e renda
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Center,
   ScrollView,
@@ -15,32 +15,44 @@ import {
 } from "@gluestack-ui/themed";
 import { User as UserIcon, Camera as CameraIcon, CalendarDays as CalendarDaysIcon } from "lucide-react-native";
 import { useDespesas } from "../context/ExpensesContext";
+import { useAuth } from "../context/AuthContext";
 import { Alert, Platform, KeyboardAvoidingView, StyleSheet } from "react-native";
 import { Input } from "@components/input";
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 
+// Função para formatar valor como moeda brasileira
+function formatCurrency(value: string | number) {
+  const num = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value;
+  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+// Função para extrair apenas números do valor formatado
+function parseCurrency(formatted: string) {
+  const numeric = formatted.replace(/\D/g, "");
+  return numeric ? Number(numeric) / 100 : 0;
+}
+
 // Componente principal da tela de perfil
 export function Perfil() {
-  // Dados simulados do usuário
-  const existingUser = {
-    name: "Vinicius Lourenço",
-    email: "vinicius.lourenco@example.com",
-    phone: "(11) 99999-1234",
-  };
+  const { user, signOut } = useAuth();
 
-  const [name, setName] = useState(existingUser.name);
-  const [email, setEmail] = useState(existingUser.email);
-  const [phone, setPhone] = useState(existingUser.phone);
-  const [income, setIncome] = useState("");
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const { despesas, renda, setRenda } = useDespesas();
+  const [income, setIncome] = useState(formatCurrency(renda));
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
-
-  const { despesas, setRenda } = useDespesas();
 
   // State for date filtering
   const [filterType, setFilterType] = useState<'month' | 'year'>('month');
   const [currentFilterDate, setCurrentFilterDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Sempre que a renda do contexto mudar, atualize o campo formatado
+  useEffect(() => {
+    setIncome(formatCurrency(renda));
+  }, [renda]);
 
   const handleSelectImage = async () => {
     // Request permission to access media library
@@ -161,6 +173,23 @@ export function Perfil() {
               Meu Perfil
             </Heading>
             <Text color="$textLight600" fontSize="$md" mb="$6">Edite seus dados e gerencie sua renda.</Text>
+            {/* Botão de sair */}
+            <Button
+              mt="$2"
+              mb="$4"
+              bg="$red600"
+              rounded="$lg"
+              onPress={signOut}
+              sx={{
+                ":pressed": {
+                  bg: "$red800"
+                }
+              }}
+            >
+              <Text color="$white" fontWeight="$bold">
+                Sair
+              </Text>
+            </Button>
           </Center>
 
           {/* Card de informações do usuário */}
@@ -168,7 +197,6 @@ export function Perfil() {
             bg="$white"
             rounded="$xl"
             p="$6"
-            shadow="md"
             sx={{ _dark: { bg: "$coolGray800" } }}
           >
             {/* Campo Nome */}
@@ -210,8 +238,13 @@ export function Perfil() {
             <Text color="$textLight800" fontWeight="$bold" mb="$1">Renda Mensal (R$)</Text>
             <Input
               value={income}
-              onChangeText={setIncome}
-              placeholder="Ex: 3500.00"
+              onChangeText={(text) => {
+                // Permite apenas números e formata
+                const numeric = text.replace(/\D/g, "");
+                const formatted = formatCurrency(numeric);
+                setIncome(formatted);
+              }}
+              placeholder="Ex: R$ 3.500,00"
               keyboardType="numeric"
               rounded="$lg"
             />
@@ -221,7 +254,8 @@ export function Perfil() {
             {/* Botão para salvar alterações */}
             <Button
               onPress={() => {
-                setRenda(Number(income) || 0);
+                const valorNumerico = parseCurrency(income);
+                setRenda(valorNumerico);
                 Alert.alert("Sucesso", "Dados atualizados com sucesso!");
               }}
               bg="#FF9100"
@@ -244,7 +278,6 @@ export function Perfil() {
             bg="$white"
             rounded="$xl"
             p="$6"
-            shadow="md"
             sx={{ _dark: { bg: "$coolGray800" } }}
             mt="$6"
           >

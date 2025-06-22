@@ -35,10 +35,7 @@ import { Button } from "@components/Button";
 
 // Import useState
 import { useState } from 'react';
-
-
-
-
+import { useAuth } from "../context/AuthContext";
 
 
 
@@ -46,6 +43,7 @@ import { useState } from 'react';
 
 export function Signin() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
+    const { signIn } = useAuth();
 
     // State for input fields
     const [email, setEmail] = useState('');
@@ -64,32 +62,35 @@ export function Signin() {
         setIsLoading(true);
         setError(null);
 
-        // Basic validation (optional, can be expanded)
         if (!email || !password) {
             setError("Por favor, preencha todos os campos.");
             setIsLoading(false);
             return;
         }
 
-        // TODO: API call logic will go here
-        console.log("Form Data:", { email, password });
-        // Simulating API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            const response = await fetch("http://100.66.7.63:3000/signin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
 
-        // Example:
-        // try {
-        //   const response = await api.post('/login', { email, password });
-        //   // Handle successful login (e.g., navigate to home, store token)
-        //   console.log("Login successful:", response.data);
-        // } catch (err) {
-        //   setError("Falha no login. Verifique suas credenciais.");
-        //   console.error("Login error:", err);
-        // } finally {
-        //   setIsLoading(false);
-        // }
+            if (!response.ok) {
+                setError(data.message || "Falha no login. Verifique suas credenciais.");
+            } else {
+                // Supondo que sua API retorna { token, user: { name, email } }
+                signIn(data.token, data.user);
+                // Aqui você pode salvar o token ou dados do usuário, se sua API retornar
+                // Exemplo: await AsyncStorage.setItem('token', data.token);
+                // E navegar para a tela principal
+                // navigation.navigate("Home"); // ou o nome da sua rota principal
+            }
+        } catch (err) {
+            setError("Erro de conexão com o servidor.");
+        }
 
-        setIsLoading(false); // Remove this if API call handles it
-        // For now, let's keep it simple and just log
+        setIsLoading(false);
     }
 
     return (

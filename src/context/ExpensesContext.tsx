@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Interface que define o formato de uma despesa
 interface Despesa {
@@ -28,6 +29,27 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   // Estado para armazenar o valor da renda
   const [renda, setRenda] = useState<number>(0);
+
+  // Carregar despesas e renda ao iniciar o app
+  useEffect(() => {
+    const loadData = async () => {
+      const savedDespesas = await AsyncStorage.getItem("despesas");
+      if (savedDespesas) setDespesas(JSON.parse(savedDespesas));
+      const savedRenda = await AsyncStorage.getItem("renda");
+      if (savedRenda) setRenda(Number(savedRenda));
+    };
+    loadData();
+  }, []);
+
+  // Salvar despesas sempre que mudar
+  useEffect(() => {
+    AsyncStorage.setItem("despesas", JSON.stringify(despesas));
+  }, [despesas]);
+
+  // Salvar renda sempre que mudar
+  useEffect(() => {
+    AsyncStorage.setItem("renda", renda.toString());
+  }, [renda]);
 
   // Função para adicionar uma nova despesa à lista
   function adicionarDespesa(despesa: Despesa) {
