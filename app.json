@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
@@ -35,7 +35,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "8e641aa2-fe63-48a8-9c26-1cfe545040f4"
+        "projectId": "dcb5fee5-b205-406a-8295-747aca29bb2a"
       }
     },
     "owner": "vinicius_scooper"
