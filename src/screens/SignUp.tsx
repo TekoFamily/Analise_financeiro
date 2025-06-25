@@ -42,40 +42,36 @@ export function SignUp() {
         setIsLoading(true);
         setError(null);
 
-        // Basic validation
         if (!name || !email || !password || !confirmPassword) {
             setError("Por favor, preencha todos os campos.");
             setIsLoading(false);
             return;
         }
-
         if (password !== confirmPassword) {
             setError("As senhas não coincidem.");
             setIsLoading(false);
             return;
         }
 
-        // TODO: API call logic will go here
-        console.log("Form Data:", { name, email, password });
-        // Simulating API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+            const response = await fetch("http://100.66.7.63:3000/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password }),
+            });
+            const data = await response.json();
 
-        // Example:
-        // try {
-        //   const response = await api.post('/register', { name, email, password });
-        //   // Handle successful registration (e.g., navigate to login or home)
-        //   console.log("Registration successful:", response.data);
-        //   navigation.navigate("Signin"); // Or directly to home if auto-login
-        // } catch (err) {
-        //   setError("Falha no cadastro. Tente novamente.");
-        //   console.error("Registration error:", err);
-        // } finally {
-        //   setIsLoading(false);
-        // }
-
-        setIsLoading(false); // Remove this if API call handles it
-        // For now, let's keep it simple and log, then navigate back
-        // handleGoBackToLogin(); // Optionally navigate after simulated sign-up
+            if (!response.ok) {
+                setError(data.message || "Falha no cadastro.");
+            } else {
+                // Cadastro realizado com sucesso
+                // Você pode redirecionar para o login:
+                navigation.navigate("Signin");
+            }
+        } catch (err) {
+            setError("Erro de conexão com o servidor.");
+        }
+        setIsLoading(false);
     }
 
     return (

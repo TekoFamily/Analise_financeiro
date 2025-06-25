@@ -4,11 +4,10 @@
     "slug": "PennyPilot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/penny_pilot_logo_no_bg.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
-      "image": "./src/assets/penny_pilot_logo_no_bg.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -20,10 +19,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./src/assets/penny_pilot_logo_no_bg.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.vinicius_scooper.PennyPilot"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,6 +32,12 @@
     "plugins": [
       "expo-font",
       "expo-image-picker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "dcb5fee5-b205-406a-8295-747aca29bb2a"
+      }
+    },
+    "owner": "vinicius_scooper"
   }
 }
