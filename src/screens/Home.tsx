@@ -39,7 +39,7 @@ export function Home() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: '#f5f5f5' }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Alterado para 0
     >
       <ScrollView
         style={{ flex: 1, backgroundColor: '#f5f5f5' }}
@@ -124,7 +124,6 @@ export function Home() {
           p="$4"
           rounded="$lg"
           mt="$6"
-          mb="$8"
         >
           <Text mb="$4" fontSize="$lg" fontWeight="bold" color="$black">
             Adicionar gasto
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
   },
   scrollViewContentContainer: {
     flexGrow: 1,
-    paddingBottom: 80,
+    // Removido paddingBottom: 80 para evitar espaço extra acima do teclado
   },
   // You can move other inline styles here if needed, for example:
   // logoImage: {
