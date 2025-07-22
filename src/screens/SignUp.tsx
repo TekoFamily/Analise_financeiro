@@ -21,6 +21,8 @@ import Logo from "@assets/logotko.png";
 
 import { Input } from "@components/input";
 
+const SERVER_URL = "http://localhost:3000"; // Atualizado para o IP correto
+
 export function SignUp() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
 
@@ -42,11 +44,17 @@ export function SignUp() {
         setIsLoading(true);
         setError(null);
 
+        console.log("Tentando conectar ao servidor...");
+        console.log("URL:", `${SERVER_URL}/signup`);
+
+        // Validação de campos vazios
         if (!name || !email || !password || !confirmPassword) {
             setError("Por favor, preencha todos os campos.");
             setIsLoading(false);
             return;
         }
+
+        // Validação de senhas
         if (password !== confirmPassword) {
             setError("As senhas não coincidem.");
             setIsLoading(false);
@@ -54,24 +62,27 @@ export function SignUp() {
         }
 
         try {
-            const response = await fetch("http://100.66.7.63:3000/signup", {
+            const response = await fetch(`${SERVER_URL}/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name, email, password }),
             });
             const data = await response.json();
 
+            console.log("Resposta do servidor:", data);
+
             if (!response.ok) {
                 setError(data.message || "Falha no cadastro.");
             } else {
                 // Cadastro realizado com sucesso
-                // Você pode redirecionar para o login:
                 navigation.navigate("Signin");
             }
         } catch (err) {
+            console.error("Erro ao conectar ao servidor:", err);
             setError("Erro de conexão com o servidor.");
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }
 
     return (

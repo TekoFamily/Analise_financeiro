@@ -88,6 +88,7 @@ export function Profile() {
       data: new Date().toLocaleDateString(),
       icone: "🎯",
       descricao: `Valor usado na meta: ${meta.nome}`,
+      tipo: "variavel", // Alterado para um valor permitido conforme definido em Despesa
     });
     setModalVisible(false);
     setValorAdicionar("");

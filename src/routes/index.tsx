@@ -22,8 +22,6 @@ function RoutesContent() {
 
 export function Routes() {
   return (
-    <AuthProvider>
-      <RoutesContent />
-    </AuthProvider>
+    <RoutesContent />
   );
 }

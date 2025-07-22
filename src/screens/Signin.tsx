@@ -37,9 +37,7 @@ import { Button } from "@components/Button";
 import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
 
-
-
-
+const SERVER_URL = "http://localhost:3000"; // Alterado para localhost
 
 export function Signin() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
@@ -62,6 +60,9 @@ export function Signin() {
         setIsLoading(true);
         setError(null);
 
+        console.log("Tentando conectar ao servidor...");
+        console.log("URL:", `${SERVER_URL}/signin`);
+
         if (!email || !password) {
             setError("Por favor, preencha todos os campos.");
             setIsLoading(false);
@@ -69,24 +70,26 @@ export function Signin() {
         }
 
         try {
-            const response = await fetch("http://100.66.7.63:3000/signin", {
+            const response = await fetch(`${SERVER_URL}/signin`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
             const data = await response.json();
 
+            console.log("Resposta do servidor:", data);
+
             if (!response.ok) {
                 setError(data.message || "Falha no login. Verifique suas credenciais.");
             } else {
-                // Supondo que sua API retorna { token, user: { name, email } }
+                if (typeof signIn !== "function") {
+                    console.error("signIn não está definido ou não é uma função.");
+                    return;
+                }
                 signIn(data.token, data.user);
-                // Aqui você pode salvar o token ou dados do usuário, se sua API retornar
-                // Exemplo: await AsyncStorage.setItem('token', data.token);
-                // E navegar para a tela principal
-                // navigation.navigate("Home"); // ou o nome da sua rota principal
             }
         } catch (err) {
+            console.error("Erro ao conectar ao servidor:", err);
             setError("Erro de conexão com o servidor.");
         }
 
