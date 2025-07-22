@@ -13,21 +13,24 @@ import { config } from "./config/gluestack-ui.config";
 import { Routes } from "./src/routes";
 import { Loading } from '@components/Loading';
 import { DespesasProvider } from "./src/context/ExpensesContext";
+import { AuthProvider } from "./src/context/AuthContext";
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Roboto_700Bold, Roboto_400Regular });
 
 
   return (
-    <DespesasProvider>
-      <GluestackUIProvider config={config}>
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor="#000"
-          translucent={false}
-        />
-        {fontsLoaded ? <Routes /> : <Loading />}
-      </GluestackUIProvider>
-    </DespesasProvider>
+    <GluestackUIProvider config={config}>
+      <AuthProvider>
+        <DespesasProvider>
+          <StatusBar
+            barStyle="light-content"
+            backgroundColor="#000"
+            translucent={false}
+          />
+          {fontsLoaded ? <Routes /> : <Loading />}
+        </DespesasProvider>
+      </AuthProvider>
+    </GluestackUIProvider>
   )
 }

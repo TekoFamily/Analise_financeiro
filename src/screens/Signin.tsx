@@ -37,7 +37,7 @@ import { Button } from "@components/Button";
 import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
 
-const SERVER_URL = "http://localhost:3000"; // Alterado para localhost
+const SERVER_URL = "http://192.168.15.16:3000"; // Atualizado para o IP da máquina
 
 export function Signin() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
@@ -80,13 +80,23 @@ export function Signin() {
             console.log("Resposta do servidor:", data);
 
             if (!response.ok) {
-                setError(data.message || "Falha no login. Verifique suas credenciais.");
-            } else {
-                if (typeof signIn !== "function") {
-                    console.error("signIn não está definido ou não é uma função.");
-                    return;
+                // Tratamento específico para diferentes tipos de erro
+                if (response.status === 500) {
+                    console.error("Erro interno do servidor:", data);
+                    setError("Erro interno do servidor. Por favor, tente novamente mais tarde.");
+                } else {
+                    setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
                 }
-                signIn(data.token, data.user);
+            } else {
+                try {
+                    await signIn(data.token, data.user);
+                    console.log("Login realizado com sucesso!");
+                    // A navegação será automática pelo AuthContext
+                    // O componente Routes vai detectar isAuthenticated=true e mostrar AppRoutes
+                } catch (signInError) {
+                    console.error("Erro ao processar login:", signInError);
+                    setError("Erro ao processar login.");
+                }
             }
         } catch (err) {
             console.error("Erro ao conectar ao servidor:", err);

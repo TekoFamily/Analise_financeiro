@@ -13,16 +13,23 @@ type AuthContextData = {
   signOut: () => void;
 };
 
-const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+export const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  function signIn(token: string, userData: User) {
-    setIsAuthenticated(true);
-    setUser(userData);
-    // Você pode salvar o token no AsyncStorage se quiser
+  async function signIn(token: string, userData: User) {
+    try {
+      // Salvar os dados do usuário
+      setUser(userData);
+      // Atualizar o estado de autenticação
+      setIsAuthenticated(true);
+      console.log('Login realizado com sucesso:', { token, userData });
+    } catch (error) {
+      console.error('Erro ao realizar login:', error);
+      throw error;
+    }
   }
 
   function signOut() {

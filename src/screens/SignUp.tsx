@@ -21,16 +21,18 @@ import Logo from "@assets/logotko.png";
 
 import { Input } from "@components/input";
 
-const SERVER_URL = "http://localhost:3000"; // Atualizado para o IP correto
+const SERVER_URL = "http://192.168.15.16:3000"; // Atualizado para o IP da máquina
 
 export function SignUp() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
 
     // State for input fields
     const [name, setName] = useState('');
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [age, setAge] = useState('');
     // Optional: state for loading and error handling
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -48,8 +50,16 @@ export function SignUp() {
         console.log("URL:", `${SERVER_URL}/signup`);
 
         // Validação de campos vazios
-        if (!name || !email || !password || !confirmPassword) {
+        if (!name || !email || !password || !confirmPassword || !username || !age) {
             setError("Por favor, preencha todos os campos.");
+            setIsLoading(false);
+            return;
+        }
+
+        // Validação de idade
+        const ageNumber = parseInt(age);
+        if (isNaN(ageNumber) || ageNumber <= 0) {
+            setError("Por favor, insira uma idade válida.");
             setIsLoading(false);
             return;
         }
@@ -65,7 +75,7 @@ export function SignUp() {
             const response = await fetch(`${SERVER_URL}/signup`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email, password, username, age }),
             });
             const data = await response.json();
 
@@ -125,6 +135,30 @@ export function SignUp() {
                                 rounded="$lg"
                                 value={name}
                                 onChangeText={setName}
+                            />
+                        </VStack>
+
+                        <VStack space="xs">
+                            <Text color="$textLight800" fontWeight="$bold">Nome de usuário*</Text>
+                            <Input
+                                placeholder="Seu nome de usuário"
+                                autoCapitalize="none"
+                                placeholderTextColor="$coolGray400"
+                                rounded="$lg"
+                                value={username}
+                                onChangeText={setUsername}
+                            />
+                        </VStack>
+
+                        <VStack space="xs">
+                            <Text color="$textLight800" fontWeight="$bold">Idade*</Text>
+                            <Input
+                                placeholder="Sua idade"
+                                keyboardType="numeric"
+                                placeholderTextColor="$coolGray400"
+                                rounded="$lg"
+                                value={age}
+                                onChangeText={setAge}
                             />
                         </VStack>
 
