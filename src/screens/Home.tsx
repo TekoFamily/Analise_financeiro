@@ -37,11 +37,12 @@ export function Home() {
   // Renderização da tela
   return (
     <KeyboardAvoidingView
-      style={styles.keyboardAvoidingView}
+      style={{ flex: 1, backgroundColor: '#f5f5f5' }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
     >
       <ScrollView
+        style={{ flex: 1, backgroundColor: '#f5f5f5' }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContentContainer}
         keyboardShouldPersistTaps="handled"
@@ -163,7 +164,6 @@ const styles = StyleSheet.create({
   scrollViewContentContainer: {
     flexGrow: 1,
     paddingBottom: 80,
-    backgroundColor: '#f5f5f5',
   },
   // You can move other inline styles here if needed, for example:
   // logoImage: {

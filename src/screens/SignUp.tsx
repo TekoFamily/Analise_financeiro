@@ -1,4 +1,4 @@
-import { VStack, Center, Text, Heading, ScrollView, Link, LinkText, HStack, Box } from "@gluestack-ui/themed";
+import { VStack, Center, Text, Heading, ScrollView, Link, LinkText, HStack, Box, Spinner } from "@gluestack-ui/themed";
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
@@ -103,15 +103,21 @@ export function SignUp() {
             <ScrollView 
                 contentContainerStyle={{ 
                     flexGrow: 1, 
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    backgroundColor: 'white'
                 }} 
                 showsVerticalScrollIndicator={false}
+                style={{ backgroundColor: 'white' }}
             >
-                <VStack px="$10" pb="$10" w="$full">
-
-                    <Center my="$12"> 
-                        <Heading color="$textDark800" fontSize="$2xl" mb="$2">
-                            Crie a sua conta!
+                {isLoading ? (
+                    <Center flex={1} bg="white" h="$full">
+                        <Spinner size="large" color="$green600" />
+                    </Center>
+                ) : (
+                    <VStack px="$10" pb="$10" w="$full" bg="white">
+                        <Center my="$12"> 
+                            <Heading color="$textDark800" fontSize="$2xl" mb="$2">
+                                Crie a sua conta!
                         </Heading>
                         <Text color="$textLight700" fontSize="$md">
                             vamos criar sua conta juntos
@@ -227,8 +233,8 @@ export function SignUp() {
                             </Link>
                         </HStack>
                     </Center>
-
-                </VStack>
+                    </VStack>
+                )}
             </ScrollView>
         </KeyboardAvoidingView>
     );
