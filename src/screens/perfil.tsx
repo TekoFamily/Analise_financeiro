@@ -40,7 +40,7 @@ export function Perfil() {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const { despesas, renda, setRenda } = useDespesas();
+  const { despesas, renda, setRenda, limparDados } = useDespesas();
   const [income, setIncome] = useState(formatCurrency(renda));
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
 
@@ -173,10 +173,44 @@ export function Perfil() {
               Meu Perfil
             </Heading>
             <Text color="$textLight600" fontSize="$md" mb="$6">Edite seus dados e gerencie sua renda.</Text>
+            {/* Botão para limpar dados */}
+            <Button
+              mt="$2"
+              mb="$2"
+              bg="$orange500"
+              rounded="$lg"
+              onPress={() => {
+                Alert.alert(
+                  "Limpar Dados",
+                  "Tem certeza que deseja limpar todos os dados de gastos? Esta ação não pode ser desfeita.",
+                  [
+                    { text: "Cancelar", style: "cancel" },
+                    { 
+                      text: "Sim, limpar", 
+                      onPress: async () => {
+                        await limparDados();
+                        Alert.alert("Sucesso", "Todos os dados de gastos foram limpos.");
+                      },
+                      style: "destructive"
+                    }
+                  ]
+                );
+              }}
+              sx={{
+                ":pressed": {
+                  bg: "$orange700"
+                }
+              }}
+            >
+              <Text color="$white" fontWeight="$bold">
+                Limpar Dados
+              </Text>
+            </Button>
+
             {/* Botão de sair */}
             <Button
               mt="$2"
-              mb="$4"
+              mb="$4" 
               bg="$red600"
               rounded="$lg"
               onPress={signOut}

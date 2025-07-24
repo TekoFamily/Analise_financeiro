@@ -18,6 +18,7 @@ interface DespesasContextType {
   adicionarDespesa: (despesa: Despesa) => void; // Função para adicionar uma nova despesa
   renda: number; // Valor da renda total
   setRenda: (valor: number) => void; // Função para atualizar a renda
+  limparDados: () => Promise<void>; // Função para limpar todos os dados de despesas
 }
 
 // Cria o contexto das despesas, inicialmente indefinido
@@ -56,9 +57,17 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
     setDespesas((prev) => [despesa, ...prev]); // Adiciona a nova despesa no início da lista
   }
 
+  // Função para limpar todos os dados de despesas e renda
+  async function limparDados() {
+    await AsyncStorage.removeItem("despesas");
+    await AsyncStorage.removeItem("renda");
+    setDespesas([]);
+    setRenda(0);
+  }
+
   // Retorna o provedor do contexto, disponibilizando os valores e funções para os componentes filhos
   return (
-    <DespesasContext.Provider value={{ despesas, adicionarDespesa, renda, setRenda }}>
+    <DespesasContext.Provider value={{ despesas, adicionarDespesa, renda, setRenda, limparDados }}>
       {children}
     </DespesasContext.Provider>
   );
