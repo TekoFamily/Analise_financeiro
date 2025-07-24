@@ -65,6 +65,11 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
     setRenda(0);
   }
 
+
+
+
+
+  
   // Retorna o provedor do contexto, disponibilizando os valores e funções para os componentes filhos
   return (
     <DespesasContext.Provider value={{ despesas, adicionarDespesa, renda, setRenda, limparDados }}>
