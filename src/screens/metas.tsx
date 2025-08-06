@@ -21,7 +21,10 @@ import { useDespesas } from "../context/ExpensesContext";
 // prazo: prazo para atingir
 // criadoEm: data de criação
 // valorAtual: quanto já foi acumulado
-//
+//acho que isso só , se faltar algo coloco aqui
+
+
+
 type Meta = {
   nome: string;
   valor: number;
