@@ -6,27 +6,38 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
-      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Este aplicativo precisa de acesso à sua galeria de fotos para permitir que você escolha uma foto de perfil."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.vinicius_scooper.PennyPilot"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-image-picker"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "dcb5fee5-b205-406a-8295-747aca29bb2a"
+      }
+    },
+    "owner": "vinicius_scooper"
   }
 }

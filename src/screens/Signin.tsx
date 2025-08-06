@@ -1,8 +1,8 @@
-import { VStack, Image, Center, Text, Heading, ScrollView } from "@gluestack-ui/themed";
+import { VStack, Image, Center, Text, Heading, ScrollView, Box, Checkbox, CheckboxIndicator, CheckboxIcon, CheckboxLabel, Link, LinkText, HStack } from "@gluestack-ui/themed";
+import { KeyboardAvoidingView, Platform } from 'react-native';
 
 /* o typescript nao tava entendendo o ".png" entao tive que criar um arquivo types para isso */
 
-import backgrtoundImg from "@assets/background.png";
 import logotkoImg from "@assets/logotko.png";
 
 /* como a logo tava em svg tivemos que baixar umas dependecias o metro.config.js */
@@ -32,82 +32,166 @@ import { Input } from "@components/input";
 /* importando o butao */
 
 import { Button } from "@components/Button";
-import { Routes } from "@routes/index";
 
+// Import useState
+import { useState } from 'react';
+import { useAuth } from "../context/AuthContext";
 
-
-
-
-
-
-
+const SERVER_URL = "http://192.168.15.16:3000"; // Atualizado para o IP da máquina
 
 export function Signin() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
+    const { signIn } = useAuth();
+
+    // State for input fields
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    // Optional: state for loading and error handling
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
 
     function handleNewAccount() {
         navigation.navigate("SignUp");
     }
 
+    // Form submission handler
+    async function handleSignIn() {
+        setIsLoading(true);
+        setError(null);
+
+        console.log("Tentando conectar ao servidor...");
+        console.log("URL:", `${SERVER_URL}/signin`);
+
+        if (!email || !password) {
+            setError("Por favor, preencha todos os campos.");
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${SERVER_URL}/signin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await response.json();
+
+            console.log("Resposta do servidor:", data);
+
+            if (!response.ok) {
+                // Tratamento específico para diferentes tipos de erro
+                if (response.status === 500) {
+                    console.error("Erro interno do servidor:", data);
+                    setError("Erro interno do servidor. Por favor, tente novamente mais tarde.");
+                } else {
+                    setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
+                }
+            } else {
+                try {
+                    await signIn(data.token, data.user);
+                    console.log("Login realizado com sucesso!");
+                    // A navegação será automática pelo AuthContext
+                    // O componente Routes vai detectar isAuthenticated=true e mostrar AppRoutes
+                } catch (signInError) {
+                    console.error("Erro ao processar login:", signInError);
+                    setError("Erro ao processar login.");
+                }
+            }
+        } catch (err) {
+            console.error("Erro ao conectar ao servidor:", err);
+            setError("Erro de conexão com o servidor.");
+        }
+
+        setIsLoading(false);
+    }
+
     return (
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} bg="$white">
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+                <VStack flex={1} px="$10" justifyContent="center">
 
-        <ScrollView contentContainerStyle={{ flexGrow: 1, backgroundColor: '#FFF' }} showsVerticalScrollIndicator={false}>
+                    <Center mb="$16">
+                        {/* Replace placeholder Box with the Image component */}
+                        <Image
+                            source={logotkoImg}
+                            alt="Logo"
+                            w={120} 
+                            h={120} 
+                            mb="$10"
+                        />
+                    </Center>
 
+                    {/* Display error message if any */}
+                    {error && (
+                        <Box mb="$4" p="$2" rounded="$sm" bg="$red100">
+                            <Text color="$red700" textAlign="center">{error}</Text>
+                        </Box>
+                    )}
 
-        <VStack flex={1} >
+                    <VStack space="md">
+                        <VStack space="xs">
+                            <Text color="$textLight800" fontWeight="$bold">E-mail*</Text>
+                            <Input
+                                placeholder="Seu e-mail"
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                placeholderTextColor="$coolGray400"
+                                rounded="$lg" // Increased border radius
+                                value={email} // Bind value
+                                onChangeText={setEmail} // Update state
+                            />
+                        </VStack>
 
-            {/* <Image
-                w="$full"
-                h={624}
-                source={backgrtoundImg}
-                defaultSource={backgrtoundImg}
-                alt="Pesssoas treinando"
-                position="absolute"
-            /> */}
+                        <VStack space="xs">
+                            <Text color="$textLight800" fontWeight="$bold">Senha*</Text>
+                            <Input
+                                placeholder="Sua senha"
+                                secureTextEntry
+                                autoCapitalize="none"
+                                placeholderTextColor="$coolGray400"
+                                rounded="$lg" // Increased border radius
+                                value={password} // Bind value
+                                onChangeText={setPassword} // Update state
+                            />
+                        </VStack>
 
-            <VStack flex={1} px="$10" pb="$16" bg="#FFF">
+                        <Checkbox value="rememberMe" aria-label="Mantenha-me conectado" size="md" mt="$2">
+                            <CheckboxIndicator mr="$2">
+                                <CheckboxIcon />
+                            </CheckboxIndicator>
+                            <CheckboxLabel color="$textLight700">Mantenha-me conectado</CheckboxLabel>
+                        </Checkbox>
+                    </VStack>
 
-
-                <Center my="$24">
-
-                    <Image
-                        source={logotkoImg}
-                        alt="Logo TKO"
-                        style={{ width: 120, height: 120, marginBottom: 16 }}
+                    <Button
+                        title="Entrar"
+                        mt="$10"
+                        mb="$6"
+                        bg="#FF9100" // Orange color from image
+                        sx={{
+                            ":pressed": {
+                                bg: "$orange700"
+                            }
+                        }}
+                        rounded="$lg" // Increased border radius
+                        onPress={handleSignIn} // Call the submission handler
+                        disabled={isLoading} // Disable button when loading
                     />
 
-                    <Text color="#888" fontSize="$sm">
-                        treine sua mente e seu corpo
-                    </Text>
+                    <Center>
+                        <HStack>
+                            <Text color="$textLight700" fontSize="$sm" fontFamily="$body">Ainda não possui uma conta? </Text>
+                            <Link onPress={handleNewAccount}>
+                                <LinkText color="#FF9100" fontSize="$sm" fontFamily="$body" fontWeight="$bold" textDecorationLine="underline">
+                                    Conecte-se
+                                </LinkText>
+                            </Link>
+                        </HStack>
+                    </Center>
 
-                </Center>
-
-                <Center gap="$2">
-                    <Heading color="#222" >
-                        Acesse sua conta
-                    </Heading>
-
-                    <Input placeholder="E-mail" keyboardType="email-address" autoCapitalize="none" style={{ backgroundColor: '#FFF', borderColor: '#DDD' }} placeholderTextColor="#888" />
-                    <Input placeholder="Senha" secureTextEntry autoCapitalize="none" style={{ backgroundColor: '#FFF', borderColor: '#DDD', }} placeholderTextColor="#888" />
-
-                    {/* colocar o "isLoading" abaixo  para ficar carregando quando user fazer a requisicao ao banco */}
-
-                    <Button title="Entrar" style={{ backgroundColor: '#FF9100', shadowColor: '#FF9100', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }} variant="solid" />
-
-                </Center>
-
-                <Center flex={1} justifyContent="flex-end" mt="$4">
-                    <Text color="#888" fontSize="$sm" mb ="$3" fontFamily="body">Ainda não possui uma conta? <Text style={{ color: '#FF9100', textDecorationLine: 'underline' }}>Conecte-se</Text></Text>
-                    <Button title="Criar conta" variant="outline" onPress={handleNewAccount} style={{ borderColor: '#FF9100' }} />
-                </Center>
-
-
-
-            </VStack>
-
-
-        </VStack>
+                </VStack>
+            </KeyboardAvoidingView>
         </ScrollView>
-    )
+    );
 }

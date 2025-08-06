@@ -20,7 +20,6 @@ export * from './ActionsheetSectionHeaderText';
 export * from './ActionsheetSectionList';
 export * from './ActionsheetVirtualizedList';
 export * from './Alert';
-export * from './AlertDialog';
 export * from './AlertDialogBackdrop';
 export * from './AlertDialogBody';
 export * from './AlertDialogCloseButton';

@@ -1,11 +1,15 @@
 import { Input as GluestackInput, InputField } from "@gluestack-ui/themed"
 import { ComponentProps } from "react"
 
+// Infer props for the GluestackInput component itself
+type GluestackInputProps = ComponentProps<typeof GluestackInput>
 
-type Props = ComponentProps<typeof InputField>
+// Update Props to include 'rounded' using the inferred type
+type Props = ComponentProps<typeof InputField> & {
+    rounded?: GluestackInputProps['rounded']
+}
 
-
-export function Input({ ...rest }: Props) {
+export function Input({ rounded, ...rest }: Props) {
 
     return (
         <GluestackInput
@@ -14,7 +18,7 @@ export function Input({ ...rest }: Props) {
             px="$4"
             borderWidth={1}
             borderColor="#DDD"
-            borderRadius={0}
+            rounded={rounded}
             overflow="hidden"
             $focus={{
                 borderWidth: 1,

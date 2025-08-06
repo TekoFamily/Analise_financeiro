@@ -1,3 +1,4 @@
+// Tela de Metas: permite ao usuário criar e acompanhar metas financeiras
 import React, { useState } from "react";
 import {
   Center,
@@ -14,6 +15,16 @@ import {
 import { Alert } from "react-native";
 import { useDespesas } from "../context/ExpensesContext";
 
+// Tipo para representar uma meta financeira
+// nome: nome da meta
+// valor: valor objetivo
+// prazo: prazo para atingir
+// criadoEm: data de criação
+// valorAtual: quanto já foi acumulado
+//acho que isso só , se faltar algo coloco aqui
+
+
+
 type Meta = {
   nome: string;
   valor: number;
@@ -22,16 +33,22 @@ type Meta = {
   valorAtual: number;
 };
 
+// Componente principal da tela de metas
 export function Profile() {
+  // Estado para lista de metas
   const [metas, setMetas] = useState<Meta[]>([]);
+  // Estado para inputs do formulário de nova meta
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
   const [prazo, setPrazo] = useState("");
+  // Estado para modal de adicionar valor à meta
   const [modalVisible, setModalVisible] = useState(false);
   const [valorAdicionar, setValorAdicionar] = useState("");
   const [metaSelecionada, setMetaSelecionada] = useState<number | null>(null);
+  // Hook do contexto de despesas para registrar gastos
   const { adicionarDespesa, despesas } = useDespesas();
 
+  // Função para adicionar uma nova meta
   const adicionarMeta = () => {
     if (!nome || !valor || !prazo) return;
     const novaMeta: Meta = {
@@ -48,12 +65,14 @@ export function Profile() {
     Alert.alert("Sucesso", "Meta adicionada com sucesso!");
   };
 
+  // Abre o modal para adicionar valor a uma meta específica
   const abrirModalAdicionarValor = (idx: number) => {
     setMetaSelecionada(idx);
     setValorAdicionar("");
     setModalVisible(true);
   };
 
+  // Adiciona valor à meta selecionada e registra como gasto
   const adicionarValorNaMeta = () => {
     if (metaSelecionada === null || !valorAdicionar) return;
     const valorNum = Number(valorAdicionar);
@@ -72,6 +91,7 @@ export function Profile() {
       data: new Date().toLocaleDateString(),
       icone: "🎯",
       descricao: `Valor usado na meta: ${meta.nome}`,
+      tipo: "variavel", // Alterado para um valor permitido conforme definido em Despesa
     });
     setModalVisible(false);
     setValorAdicionar("");
@@ -79,8 +99,10 @@ export function Profile() {
     Alert.alert("Sucesso", "Valor adicionado à meta e registrado como gasto!");
   };
 
+  // Renderização da tela
   return (
     <Center flex={1} bg="$gray100">
+      {/* Modal para adicionar valor à meta */}
       {modalVisible && (
         <Box
           position="absolute"
@@ -115,8 +137,10 @@ export function Profile() {
           </Center>
         </Box>
       )}
+      {/* Conteúdo principal da tela */}
       <ScrollView w="100%">
         <Center mt="$8" mb="$4">
+          {/* Logo do app */}
           <Image
             source={require("@assets/logotko.png")}
             alt="Logo"
@@ -126,6 +150,7 @@ export function Profile() {
           />
         </Center>
         <VStack space="md" p="$4" mt="$2">
+          {/* Lista de metas cadastradas */}
           {metas.map((meta, idx) => {
             const progresso = meta.valorAtual / meta.valor;
             return (
@@ -147,6 +172,7 @@ export function Profile() {
                 <Text fontSize="$xs" color="$gray600" mb="$2">
                   Criado em: {meta.criadoEm}
                 </Text>
+                {/* Barra de progresso */}
                 <Box
                   bg="$gray300"
                   h={4}
@@ -167,6 +193,7 @@ export function Profile() {
                     R$ {meta.valorAtual} de R$ {meta.valor}
                   </Text>
                 </HStack>
+                {/* Botão para adicionar valor à meta */}
                 <Button
                   mt="$2"
                   bg="$orange500"
@@ -178,6 +205,7 @@ export function Profile() {
             );
           })}
 
+          {/* Formulário para adicionar nova meta */}
           <Box bg="$white" borderRadius="$lg" p="$4">
             <Text fontSize="$lg" fontWeight="bold" color="$gray900" mb="$2">
               Adicionar meta

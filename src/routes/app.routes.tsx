@@ -20,7 +20,7 @@ import AnalysisIcon from '@assets/dash.svg'
 import { Home } from '@screens/Home'
 import { History } from '@screens/gastos'
 import { Profile } from '@screens/metas'
-import { Exercise } from '@screens/perfil'
+import { Perfil } from '@screens/perfil'
 import { Platform } from 'react-native'
 
 type AppRoutes = {
@@ -84,7 +84,7 @@ export function AppRoutes() {
       />
       <Screen
         name="exercise"
-        component={Exercise}
+        component={Perfil}
          options={{
           tabBarIcon: ({ color }) => (
             <ProfileSvg fill={color} width={iconSize} height={iconSize} />

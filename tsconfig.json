@@ -1,22 +1,21 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true,   
-        "paths": {
-        "@dtos/*": ["./src/dtos/*"],
-        "@assets/*": ["./src/assets/*"],
-        "@components/*": ["./src/components/*"],
-        "@screens/*": ["./src/screens/*"],
-        "@storage/*": ["./src/storage/*"],
-        "@utils/*": ["./src/utils/*"],
-        "@services/*": ["./src/services/*"],
-        "@hooks/*": ["./src/hooks/*"],
-        "@contexts/*": ["./src/contexts/*"],
-        "@routes/*": ["./src/routes/*"]
-        
-      },
-       "typeRoots": ["./src/@types"]
-
-    }
- }
+    "strict": true,
+    "jsx": "react-native", // Adicionado para suportar JSX
+    "paths": {
+      "@dtos/*": ["./src/dtos/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@components/*": ["./src/components/*"],
+      "@screens/*": ["./src/screens/*"],
+      "@storage/*": ["./src/storage/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@services/*": ["./src/services/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@contexts/*": ["./src/contexts/*"],
+      "@routes/*": ["./src/routes/*"]
+    },
+    "typeRoots": ["./src/@types"]
+  }
+}
 
