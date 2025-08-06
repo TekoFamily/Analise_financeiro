@@ -1,66 +1,99 @@
-import {createBottomTabNavigator,BottomTabNavigationProp} from '@react-navigation/bottom-tabs';  
+import {
+  BottomTabNavigationProp,
+  createBottomTabNavigator,
+} from '@react-navigation/bottom-tabs'
+import { gluestackUIConfig } from '../../config/gluestack-ui.config'
+
+/* import HomeSvg from '@assets/home.svg' */
+
+import MoneySvg from '@assets/bakingmoney.svg'
 
 
-import {Home} from '../screens/Home';
+import ProfileSvg from '@assets/profile.svg'
+/* import LaptopReportIcon from '@assets/laptop-report-icon.svg' */
 
-import {Profile} from '../screens/Profile';
+import GoalsSvg from '@assets/goals-svgrepo-com.svg' // novo import
 
-import {History} from '../screens/History';
-
-import {Exercise} from '../screens/Exercise';
-
-const { Navigator , Screen } = createBottomTabNavigator();
+import AnalysisIcon from '@assets/dash.svg'
 
 
-type AppRoutes ={
-  home: undefined;
-  exercise: undefined;
-  profile: undefined;
-  history: undefined;
-  
+import { Home } from '@screens/Home'
+import { History } from '@screens/gastos'
+import { Profile } from '@screens/metas'
+import { Perfil } from '@screens/perfil'
+import { Platform } from 'react-native'
+
+type AppRoutes = {
+  home: undefined
+  exercise: undefined
+  profile: undefined
+  history: undefined
 }
 
-export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>;
+export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>
 
-
-
-
+const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>()
 
 export function AppRoutes() {
-    return(
-        <Navigator>
-            <Screen
+  const { tokens } = gluestackUIConfig
+  const iconSize = tokens.space['6']
 
-            name ="home"
-            component={Home}
-
-            />
-
-              <Screen
-
-            name ="History"
-            component={History}
-
-            />
-
-
-              <Screen
-
-            name ="profile"
-            component={Profile}
-
-            />
-
-
-              <Screen
-
-            name ="exercise"
-            component={Exercise}
-
-            />
-
+  return (
+    <Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: tokens.colors.green500,
+        tabBarInactiveTintColor: tokens.colors.gray200,
+        tabBarStyle: {
+          backgroundColor: tokens.colors.white,
+          borderTopWidth: 0,
           
-          
-        </Navigator>
-    );
+          height: Platform.OS === 'android' ? 'auto' : 96,
+          paddingBottom: tokens.space['14'],
+          paddingTop: tokens.space['6'],
+        },
+      }}
+    >
+      <Screen
+        name="home"
+        component={Home}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <AnalysisIcon fill={color} width={50} height={40} />
+          ),
+        }}
+      />
+      <Screen
+        name="history"
+        component={History}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <MoneySvg fill={color} width={iconSize} height={iconSize} />
+          ),
+        }}
+      />
+      <Screen
+        name="profile"
+        component={Profile}
+        options={{
+          tabBarIcon: ({ color }) => (
+            <GoalsSvg fill={color} width={iconSize} height={iconSize} />
+          ),
+        }}
+      />
+      <Screen
+        name="exercise"
+        component={Perfil}
+         options={{
+          tabBarIcon: ({ color }) => (
+            <ProfileSvg fill={color} width={iconSize} height={iconSize} />
+          ),
+        }}
+        
+   
+       
+      />
+    </Navigator>
+  )
 }
