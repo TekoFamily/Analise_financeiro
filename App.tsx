@@ -20,10 +20,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 export default function App() {
-   useEffect(() => {
-    NavigationBar.setVisibilityAsync('hidden');
+  /*  useEffect(() => {
+    NavigationBar.setVisibilityAsync('');
      NavigationBar.setBehaviorAsync('overlay');
-  }, []);
+  }, []); */
   const [fontsLoaded] = useFonts({ Roboto_700Bold, Roboto_400Regular });
 
   console.log('[App] Renderizado, fontsLoaded:', fontsLoaded);

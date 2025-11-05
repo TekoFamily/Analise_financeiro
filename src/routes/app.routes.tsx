@@ -1,6 +1,7 @@
 import {
   BottomTabNavigationProp,
   createBottomTabNavigator,
+  RouteProp
 } from '@react-navigation/bottom-tabs'
 import { gluestackUIConfig } from '../../config/gluestack-ui.config'
 
@@ -17,13 +18,50 @@ import GoalsSvg from '@assets/goals-svgrepo-com.svg' // novo import
 import AnalysisIcon from '@assets/dash.svg'
 
 
+
+
+
+
+import { lazy, Suspense } from 'react'
+import { ActivityIndicator, View } from 'react-native'
+import { Platform } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context' // ✅ Este deve ficar
+
+
+
+
+const Home = lazy(() => import('../screens/Home').then(module => ({ default: module.Home })))
+const History = lazy(() => import('../screens/gastos').then(module => ({ default: module.History })))
+const Profile = lazy(() => import('../screens/metas').then(module => ({ default: module.Profile })))
+const Perfil = lazy(() => import('../screens/perfil').then(module => ({ default: module.Perfil })))
+
+
+
+
+// Componente de loading para Suspense
+function LoadingScreen() {
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+      <ActivityIndicator size="large" color="#FF9100" />
+    </View>
+  )
+}
+
+
+
+
+/* 
+
 import { Home } from '@screens/Home'
 import { History } from '@screens/gastos'
 import { Profile } from '@screens/metas'
 import { Perfil } from '@screens/perfil'
 import { Platform } from 'react-native'
+ */
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+
+
 
 
 type AppRoutes = {
@@ -64,45 +102,67 @@ export function AppRoutes() {
         },
       }}
     >
-      <Screen
-        name="home"
-        component={Home}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-      />
-      <Screen
-        name="history"
-        component={History}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <MoneySvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-      />
-      <Screen
-        name="profile"
-        component={Profile}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <GoalsSvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-      />
-      <Screen
-        name="exercise"
-        component={Perfil}
-         options={{
-          tabBarIcon: ({ color }) => (
-            <ProfileSvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-        
+
+
+<Screen
+  name="home"
+  component={() => (
+    <Suspense fallback={<LoadingScreen />}>
+      <Home />
+    </Suspense>
+  )}
+  options={{
+    tabBarIcon: ({ color }) => (
+      <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
+    ),
+  }}
+/>
+
+<Screen
+  name="history"
+  component={() => (
+    <Suspense fallback={<LoadingScreen />}>
+      <History />
+    </Suspense>
+  )}
+  options={{
+    tabBarIcon: ({ color }) => (
+      <MoneySvg fill={color} width={iconSize} height={iconSize} />
+    ),
+  }}
+/>
+
+<Screen
+  name="profile"
+  component={() => (
+    <Suspense fallback={<LoadingScreen />}>
+      <Profile />
+    </Suspense>
+  )}
+  options={{
+    tabBarIcon: ({ color }) => (
+      <GoalsSvg fill={color} width={iconSize} height={iconSize} />
+    ),
+  }}
+/>
+
+<Screen
+  name="exercise"
+  component={() => (
+    <Suspense fallback={<LoadingScreen />}>
+      <Perfil />
+    </Suspense>
+  )}
+  options={{
+    tabBarIcon: ({ color }) => (
+      <ProfileSvg fill={color} width={iconSize} height={iconSize} />
+    ),
+  }}
+/>
+          
    
        
-      />
+      
     </Navigator>
   )
 }
