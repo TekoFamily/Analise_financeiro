@@ -19,6 +19,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
+  console.log('[AuthProvider] Renderizado, isAuthenticated:', isAuthenticated);
+
   async function signIn(token: string, userData: User) {
     try {
       // Salvar os dados do usuário

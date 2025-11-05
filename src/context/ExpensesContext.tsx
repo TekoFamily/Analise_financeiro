@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Interface que define o formato de uma despesa
@@ -30,26 +30,62 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   // Estado para armazenar o valor da renda
   const [renda, setRenda] = useState<number>(0);
+  // Flag para evitar salvar durante o carregamento inicial
+  const isInitialMount = useRef(true);
+
+  console.log('[DespesasProvider] Renderizado');
 
   // Carregar despesas e renda ao iniciar o app
   useEffect(() => {
     const loadData = async () => {
-      const savedDespesas = await AsyncStorage.getItem("despesas");
-      if (savedDespesas) setDespesas(JSON.parse(savedDespesas));
-      const savedRenda = await AsyncStorage.getItem("renda");
-      if (savedRenda) setRenda(Number(savedRenda));
+      try {
+        const savedDespesas = await AsyncStorage.getItem("despesas");
+        if (savedDespesas) {
+          const parsed = JSON.parse(savedDespesas);
+          setDespesas(parsed);
+        }
+        const savedRenda = await AsyncStorage.getItem("renda");
+        if (savedRenda) {
+          setRenda(Number(savedRenda));
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do AsyncStorage:", error);
+      } finally {
+        // Marca que o carregamento inicial terminou
+        isInitialMount.current = false;
+      }
     };
     loadData();
   }, []);
 
-  // Salvar despesas sempre que mudar
+  // Salvar despesas sempre que mudar (mas não durante o carregamento inicial)
   useEffect(() => {
-    AsyncStorage.setItem("despesas", JSON.stringify(despesas));
+    // Não salva durante o carregamento inicial para evitar loops
+    if (isInitialMount.current) return;
+
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem("despesas", JSON.stringify(despesas));
+      } catch (error) {
+        console.error("Erro ao salvar despesas:", error);
+      }
+    };
+    saveData();
   }, [despesas]);
 
-  // Salvar renda sempre que mudar
+  // Salvar renda sempre que mudar (mas não durante o carregamento inicial)
   useEffect(() => {
-    AsyncStorage.setItem("renda", renda.toString());
+    // Não salva durante o carregamento inicial para evitar loops
+    if (isInitialMount.current) return;
+
+    const saveData = async () => {
+      try {
+        await AsyncStorage.setItem("renda", renda.toString());
+      } catch (error) {
+        console.error("Erro ao salvar renda:", error);
+      }
+    };
+    saveData();
   }, [renda]);
 
   // Função para adicionar uma nova despesa à lista

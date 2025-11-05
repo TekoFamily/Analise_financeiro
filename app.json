@@ -31,7 +31,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-router"
     ],
     "extra": {
       "eas": {

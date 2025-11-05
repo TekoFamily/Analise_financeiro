@@ -1,6 +1,8 @@
 import { StatusBar } from 'react-native';
-import React, { useEffect } from 'react';
-import * as NavigationBar from 'expo-navigation-bar'; // <-- adicione aqui
+import React, { useEffect } from 'react'; // Adicione useEffect
+
+
+ import * as NavigationBar from 'expo-navigation-bar'; // Comentado - pode causar problemas no Expo Go
 
 import {
   useFonts,
@@ -14,12 +16,20 @@ import { Routes } from "./src/routes";
 import { Loading } from '@components/Loading';
 import { DespesasProvider } from "./src/context/ExpensesContext";
 import { AuthProvider } from "./src/context/AuthContext";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 
 export default function App() {
+   useEffect(() => {
+    NavigationBar.setVisibilityAsync('hidden');
+     NavigationBar.setBehaviorAsync('overlay');
+  }, []);
   const [fontsLoaded] = useFonts({ Roboto_700Bold, Roboto_400Regular });
 
+  console.log('[App] Renderizado, fontsLoaded:', fontsLoaded);
 
   return (
+    <SafeAreaProvider>
     <GluestackUIProvider config={config}>
       <AuthProvider>
         <DespesasProvider>
@@ -32,5 +42,6 @@ export default function App() {
         </DespesasProvider>
       </AuthProvider>
     </GluestackUIProvider>
+    </SafeAreaProvider>
   )
 }

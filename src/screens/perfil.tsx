@@ -381,6 +381,6 @@ const styles = StyleSheet.create({
   },
   scrollViewContentContainer: {
     flexGrow: 1,
-    // Removido paddingBottom: 80
+    paddingBottom: 80, // evita que o conteúdo seja coberto pela barra inferior
   },
 });

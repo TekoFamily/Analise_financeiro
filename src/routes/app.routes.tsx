@@ -23,6 +23,9 @@ import { Profile } from '@screens/metas'
 import { Perfil } from '@screens/perfil'
 import { Platform } from 'react-native'
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+
 type AppRoutes = {
   home: undefined
   exercise: undefined
@@ -36,7 +39,12 @@ const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>()
 
 export function AppRoutes() {
   const { tokens } = gluestackUIConfig
-  const iconSize = tokens.space['6']
+  const iconSize = tokens.space['7']
+  const insets = useSafeAreaInsets()
+  const top = insets.top
+  const bottom = insets.bottom
+  const left = insets.left
+  const right = insets.right
 
   return (
     <Navigator
@@ -47,11 +55,11 @@ export function AppRoutes() {
         tabBarInactiveTintColor: tokens.colors.gray200,
         tabBarStyle: {
           backgroundColor: tokens.colors.white,
-          borderTopWidth: 0,
-          
-          height: Platform.OS === 'android' ? 'auto' : 96,
-          paddingBottom: tokens.space['14'],
-          paddingTop: tokens.space['6'],
+          borderTopWidth: 5,
+          height: Platform.OS === 'ios' ? 56 + bottom : 86,
+          paddingBottom: bottom,
+          paddingLeft: left,
+          paddingRight: right,
         },
       }}
     >
@@ -60,7 +68,7 @@ export function AppRoutes() {
         component={Home}
         options={{
           tabBarIcon: ({ color }) => (
-            <AnalysisIcon fill={color} width={50} height={40} />
+            <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
           ),
         }}
       />

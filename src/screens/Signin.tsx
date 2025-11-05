@@ -37,9 +37,11 @@ import { Button } from "@components/Button";
 import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
 
-const SERVER_URL = "http://192.168.15.16:3000"; // Atualizado para o IP da máquina
+const SERVER_URL = "http://100.66.7.63:3000"; // Atualizado para o IP da máquina
 
 export function Signin() {
+    console.log('[Signin] Renderizado');
+    
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
     const { signIn } = useAuth();
 

@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "../context/AuthContext";
 function RoutesContent() {
   const { isAuthenticated } = useAuth();
 
+  console.log('[RoutesContent] Renderizado, isAuthenticated:', isAuthenticated);
+
   const theme = DefaultTheme;
   theme.colors.background = gluestackUIConfig.tokens.colors.gray700;
 

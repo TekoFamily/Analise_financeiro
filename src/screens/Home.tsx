@@ -118,12 +118,12 @@ export function Home() {
         <UltimosGastos despesas={despesas} />
         {/* Formulário de Adicionar Gasto */}
         <Box
-          w="90%"
+          w="95%"
           alignSelf="center"
           bg="$white"
-          p="$4"
+          p="$10"
           rounded="$lg"
-          mt="$6"
+          mt="$1"
         >
           <Text mb="$4" fontSize="$lg" fontWeight="bold" color="$black">
             Adicionar gasto
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContentContainer: {
-    flexGrow: 1,
+    flexGrow: 5,
     // Removido paddingBottom: 80 para evitar espaço extra acima do teclado
   },
   // You can move other inline styles here if needed, for example:

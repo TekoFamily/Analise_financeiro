@@ -21,7 +21,7 @@ import Logo from "@assets/logotko.png";
 
 import { Input } from "@components/input";
 
-const SERVER_URL = "http://192.168.15.16:3000"; // Atualizado para o IP da máquina
+const SERVER_URL = "http://100.66.7.63:3000"; // Atualizado para o IP da máquina
 
 export function SignUp() {
     const navigation = useNavigation<AuthNavigatorRoutesProps>();

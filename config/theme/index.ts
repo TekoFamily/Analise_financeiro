@@ -150,6 +150,6 @@ export * from './VStack';
 export * from './View';
 export * from './ImageBackground';
 export * from './InputAccessoryView';
-export * from './SafeAreaView';
+/* export * from './SafeAreaView'; */
 export * from './RefreshControl';
 export * from './VirtualizedList';
