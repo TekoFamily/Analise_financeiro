@@ -36,6 +36,7 @@ import { Button } from "@components/Button";
 // Import useState
 import { useState } from 'react';
 import { useAuth } from "../context/AuthContext";
+import { Spinner } from "@gluestack-ui/themed";
 
 const SERVER_URL = "http://100.66.7.63:3000"; // Atualizado para o IP da máquina
 
@@ -108,91 +109,100 @@ export function Signin() {
         setIsLoading(false);
     }
 
+
+
+
     return (
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} bg="$white">
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-                <VStack flex={1} px="$10" justifyContent="center">
+                {isLoading ? (
+                    <Center flex={1} bg="white" h="$full">
+                        <Spinner size="large" color="$green600" />
+                    </Center>
+                ) : (
+                    <VStack flex={1} px="$10" justifyContent="center">
 
-                    <Center mb="$16">
-                        {/* Replace placeholder Box with the Image component */}
-                        <Image
-                            source={logotkoImg}
-                            alt="Logo"
-                            w={120} 
-                            h={120} 
-                            mb="$10"
+                        <Center mb="$16">
+                            {/* Replace placeholder Box with the Image component */}
+                            <Image
+                                source={logotkoImg}
+                                alt="Logo"
+                                w={120} 
+                                h={120} 
+                                mb="$10"
+                            />
+                        </Center>
+
+                        {/* Display error message if any */}
+                        {error && (
+                            <Box mb="$4" p="$2" rounded="$sm" bg="$red100">
+                                <Text color="$red700" textAlign="center">{error}</Text>
+                            </Box>
+                        )}
+
+                        <VStack space="md">
+                            <VStack space="xs">
+                                <Text color="$textLight800" fontWeight="$bold">E-mail*</Text>
+                                <Input
+                                    placeholder="Seu e-mail"
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    placeholderTextColor="$coolGray400"
+                                    rounded="$lg" // Increased border radius
+                                    value={email} // Bind value
+                                    onChangeText={setEmail} // Update state
+                                />
+                            </VStack>
+
+                            <VStack space="xs">
+                                <Text color="$textLight800" fontWeight="$bold">Senha*</Text>
+                                <Input
+                                    placeholder="Sua senha"
+                                    secureTextEntry
+                                    autoCapitalize="none"
+                                    placeholderTextColor="$coolGray400"
+                                    rounded="$lg" // Increased border radius
+                                    value={password} // Bind value
+                                    onChangeText={setPassword} // Update state
+                                />
+                            </VStack>
+
+                            <Checkbox value="rememberMe" aria-label="Mantenha-me conectado" size="md" mt="$2">
+                                <CheckboxIndicator mr="$2">
+                                    <CheckboxIcon />
+                                </CheckboxIndicator>
+                                <CheckboxLabel color="$textLight700">Mantenha-me conectado</CheckboxLabel>
+                            </Checkbox>
+                        </VStack>
+
+                        <Button
+                            title="Entrar"
+                            mt="$10"
+                            mb="$6"
+                            bg="#FF9100" // Orange color from image
+                            sx={{
+                                ":pressed": {
+                                    bg: "$orange700"
+                                }
+                            }}
+                            rounded="$lg" // Increased border radius
+                            onPress={handleSignIn} // Call the submission handler
+                            disabled={isLoading} // Disable button when loading
                         />
-                    </Center>
 
-                    {/* Display error message if any */}
-                    {error && (
-                        <Box mb="$4" p="$2" rounded="$sm" bg="$red100">
-                            <Text color="$red700" textAlign="center">{error}</Text>
-                        </Box>
-                    )}
+                        <Center>
+                            <HStack>
+                                <Text color="$textLight700" fontSize="$sm" fontFamily="$body">Ainda não possui uma conta? </Text>
+                                <Link onPress={handleNewAccount}>
+                                    <LinkText color="#FF9100" fontSize="$sm" fontFamily="$body" fontWeight="$bold" textDecorationLine="underline">
+                                        Conecte-se
+                                    </LinkText>
+                                </Link>
+                            </HStack>
+                        </Center>
 
-                    <VStack space="md">
-                        <VStack space="xs">
-                            <Text color="$textLight800" fontWeight="$bold">E-mail*</Text>
-                            <Input
-                                placeholder="Seu e-mail"
-                                keyboardType="email-address"
-                                autoCapitalize="none"
-                                placeholderTextColor="$coolGray400"
-                                rounded="$lg" // Increased border radius
-                                value={email} // Bind value
-                                onChangeText={setEmail} // Update state
-                            />
-                        </VStack>
-
-                        <VStack space="xs">
-                            <Text color="$textLight800" fontWeight="$bold">Senha*</Text>
-                            <Input
-                                placeholder="Sua senha"
-                                secureTextEntry
-                                autoCapitalize="none"
-                                placeholderTextColor="$coolGray400"
-                                rounded="$lg" // Increased border radius
-                                value={password} // Bind value
-                                onChangeText={setPassword} // Update state
-                            />
-                        </VStack>
-
-                        <Checkbox value="rememberMe" aria-label="Mantenha-me conectado" size="md" mt="$2">
-                            <CheckboxIndicator mr="$2">
-                                <CheckboxIcon />
-                            </CheckboxIndicator>
-                            <CheckboxLabel color="$textLight700">Mantenha-me conectado</CheckboxLabel>
-                        </Checkbox>
                     </VStack>
-
-                    <Button
-                        title="Entrar"
-                        mt="$10"
-                        mb="$6"
-                        bg="#FF9100" // Orange color from image
-                        sx={{
-                            ":pressed": {
-                                bg: "$orange700"
-                            }
-                        }}
-                        rounded="$lg" // Increased border radius
-                        onPress={handleSignIn} // Call the submission handler
-                        disabled={isLoading} // Disable button when loading
-                    />
-
-                    <Center>
-                        <HStack>
-                            <Text color="$textLight700" fontSize="$sm" fontFamily="$body">Ainda não possui uma conta? </Text>
-                            <Link onPress={handleNewAccount}>
-                                <LinkText color="#FF9100" fontSize="$sm" fontFamily="$body" fontWeight="$bold" textDecorationLine="underline">
-                                    Conecte-se
-                                </LinkText>
-                            </Link>
-                        </HStack>
-                    </Center>
-
-                </VStack>
+                )}
             </KeyboardAvoidingView>
         </ScrollView>
     );

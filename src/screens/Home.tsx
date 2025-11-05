@@ -123,7 +123,7 @@ export function Home() {
           bg="$white"
           p="$10"
           rounded="$lg"
-          mt="$1"
+          mt="$30"
         >
           <Text mb="$4" fontSize="$lg" fontWeight="bold" color="$black">
             Adicionar gasto
