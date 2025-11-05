@@ -58,6 +58,7 @@ export function AppRoutes() {
           borderTopWidth: 2,
           height: Platform.OS === 'ios' ? 59 + bottom : 96,
           paddingBottom: bottom,
+          paddingTop: 15, 
           paddingLeft: left,
           paddingRight: right,
         },
