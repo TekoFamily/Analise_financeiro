@@ -71,12 +71,25 @@ export function AppRoutes() {
           tabBarInactiveTintColor: tokens.colors.gray200,
           tabBarStyle: {
             backgroundColor: tokens.colors.white,
-            borderTopWidth: 2,
-            height: Platform.OS === 'ios' ? 59 + insets.bottom : 96,
+            borderTopWidth: 1,
+            height: Platform.OS === 'ios' ? 59 + insets.bottom : 86,
             paddingBottom: insets.bottom,
-            paddingTop: 15,
+            paddingTop: 25,
             paddingLeft: insets.left,
             paddingRight: insets.right,
+              // ✅ POSICIONAMENTO absoluto para controle total
+            position: 'absolute',
+            bottom: -5,
+            left: 0,
+            right: 0,
+            elevation: 8, // Sombra no Android
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 3.84,
           },
         }}
       >
