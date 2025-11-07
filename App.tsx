@@ -17,25 +17,25 @@ import { Loading } from '@components/Loading';
 import { DespesasProvider } from "./src/context/ExpensesContext";
 import { AuthProvider } from "./src/context/AuthContext";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ErrorBoundary } from './src/components/ErrorBoundary'; // ← ADICIONE ESTE IMPORT
+
 
 
 export default function App() {
-  /*  useEffect(() => {
-    NavigationBar.setVisibilityAsync('');
-     NavigationBar.setBehaviorAsync('overlay');
-  }, []); */
+  // Remova qualquer NavigationBar.setVisibilityAsync ou overlay aqui!
   const [fontsLoaded] = useFonts({ Roboto_700Bold, Roboto_400Regular });
 
   console.log('[App] Renderizado, fontsLoaded:', fontsLoaded);
 
   return (
+    <ErrorBoundary>
     <SafeAreaProvider>
     <GluestackUIProvider config={config}>
       <AuthProvider>
         <DespesasProvider>
           <StatusBar
-            barStyle="light-content"
-            backgroundColor="#000"
+            barStyle="dark-content"
+            backgroundColor="#fff"
             translucent={false}
           />
           {fontsLoaded ? <Routes /> : <Loading />}
@@ -43,5 +43,6 @@ export default function App() {
       </AuthProvider>
     </GluestackUIProvider>
     </SafeAreaProvider>
+    </ErrorBoundary>
   )
 }

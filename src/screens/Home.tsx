@@ -13,11 +13,13 @@ import {
 import { Dimensions, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { ResumoDoMes } from "../components/ResumoDoMes";
 import { UltimosGastos } from "../components/UltimosGastos";
+
 import { AdicionarGastoForm } from "../components/AdicionarGastoForm"; // Novo componente
 import { ToggleSaldoButton } from "../components/ToggleSaldoButton";
 import { Image } from "react-native";
 import { useDespesas } from "../context/ExpensesContext"; // já está importado
 import { Alert } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient'; // Corrija para expo-linear-gradient
 
 // Tela Home: painel principal do app, mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto
 export function Home() {
@@ -37,121 +39,129 @@ export function Home() {
   // Renderização da tela
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#f5f5f5' }}
+      style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Alterado para 0
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <ScrollView
-        style={{ flex: 1, backgroundColor: '#f5f5f5' }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollViewContentContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header com logo e saldo */}
-        <Box
-          w="100%"
-          px="$4"
-          pt="$10"
-          pb="$10"
-          bg="$white"
-          style={{ position: "relative" }}
-          mt="$10"
+      <LinearGradient colors={["#ffe5cd", "#fff"]} style={{ flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scrollViewContentContainer, { paddingBottom: 32 }]} // margem inferior para não colar
+          keyboardShouldPersistTaps="handled"
         >
-          <HStack justifyContent="flex-end" alignItems="center">
-            {/* Logo do app */}
-            <Image
-              source={require("../assets/logotko.png")}
-              style={{
-                width: 80,
-                height: 80,
-                resizeMode: "contain",
-                marginRight: "80%", // ajuste esse valor para mover mais ou menos
+          {/* Header com logo e saldo */}
+          <Box
+            w="95%"
+            alignSelf="center"
+            px="$6"
+            pt="$7"
+            pb="$7"
+            bg="$white"
+            rounded="$2xl"
+            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6 }}
+            mb="$4"
+            mt="$8"
+          >
+            <Center mb="$4">
+              <Image
+                source={require("../assets/logotko.png")}
+                style={{ width: 100, height: 100, resizeMode: "contain" }}
+              />
+            </Center>
+            <VStack space="md">
+              <Text fontSize="$md" color="$gray600" mb="$2" textAlign="center">Saldo disponível</Text>
+              <HStack alignItems="center" justifyContent="center" space="sm">
+                <Text fontSize="$4xl" fontWeight="bold" color="$black">
+                  {saldoVisivel
+                    ? `R$ ${saldo.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`
+                    : "••••••"}
+                </Text>
+                <ToggleSaldoButton
+                  visivel={saldoVisivel}
+                  onToggle={() => setSaldoVisivel((v) => !v)}
+                />
+              </HStack>
+              <HStack alignItems="center" justifyContent="space-between" mt="$2">
+                <HStack alignItems="center" space="xs">
+                  <Text fontSize="$md">💰</Text>
+                  <Text fontSize="$sm" color="$gray600">
+                    Renda: R$ {renda.toLocaleString("pt-BR")}
+                  </Text>
+                </HStack>
+                <HStack alignItems="center" space="xs">
+                  <Text fontSize="$md">💸</Text>
+                  <Text fontSize="$sm" color="$gray600">
+                    Gastos: R$ {gastosTotais.toLocaleString("pt-BR")}
+                  </Text>
+                </HStack>
+              </HStack>
+            </VStack>
+          </Box>
+          {/* Resumo do mês */}
+          <Box
+            w="92%"
+            alignSelf="center"
+            bg="$orange100"
+            p="$5"
+            rounded="$xl"
+            style={{ elevation: 2, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4 }}
+            mb="$3"
+          >
+            <ResumoDoMes />
+          </Box>
+          {/* Últimos Gastos */}
+          <Box
+            w="92%"
+            alignSelf="center"
+            bg="$white"
+            p="$5"
+            rounded="$xl"
+            style={{ elevation: 1, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 2 }}
+            mb="$3"
+          >
+            <UltimosGastos despesas={despesas} />
+          </Box>
+          {/* Formulário de Adicionar Gasto */}
+          <Box
+            w="92%"
+            alignSelf="center"
+            bg="$white"
+            p="$7"
+            rounded="$2xl"
+            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6 }}
+            mt="$2"
+            mb="$10"
+          >
+            <Text mb="$4" fontSize="$xl" fontWeight="bold" color="$white">Adicionar gasto</Text>
+            <AdicionarGastoForm
+              categorias={categorias}
+              onSalvar={({ valor, categoria, data, descricao, tipo }) => {
+                if (!valor || !categoria || !data || !descricao || !tipo) return;
+                const novaDespesa = {
+                  id: Date.now(),
+                  nome: categoria.charAt(0).toUpperCase() + categoria.slice(1),
+                  valor: parseFloat(valor.replace(",", ".")),
+                  data,
+                  icone:
+                    categoria.toLowerCase() === "mercado"
+                      ? "🛒"
+                      : categoria.toLowerCase() === "lazer"
+                      ? "🎉"
+                      : "🚗",
+                  descricao,
+                  tipo,
+                };
+                adicionarDespesa(novaDespesa); // Use o contexto!
+                Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
               }}
             />
-          </HStack>
-          <VStack mt="$4" space="sm">
-            <HStack alignItems="center" space="sm">
-              {/* Saldo do usuário, pode ser ocultado */}
-              <Text fontSize="$2xl" fontWeight="bold" color="$black">
-                Saldo: {saldoVisivel
-                  ? `R$ ${saldo.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}`
-                  : "••••••"}
-              </Text>
-              {/* Botão para alternar visibilidade do saldo */}
-              <ToggleSaldoButton
-                visivel={saldoVisivel}
-                onToggle={() => setSaldoVisivel((v) => !v)}
-              />
-            </HStack>
-            <HStack alignItems="center" space="md">
-              {/* Renda e gastos totais */}
-              <HStack alignItems="center" space="xs">
-                <Text fontSize="$md">💰</Text>
-                <Text fontSize="$sm" color="$gray600">
-                  Renda: R$ {renda.toLocaleString("pt-BR")}
-                </Text>
-              </HStack>
-              <HStack alignItems="center" space="xs">
-                <Text fontSize="$md">💸</Text>
-                <Text fontSize="$sm" color="$gray600">
-                  Gastos: R$ {gastosTotais.toLocaleString("pt-BR")}
-                </Text>
-              </HStack>
-            </HStack>
-          </VStack>
-        </Box>
-        {/* Resumo do mês */}
-        <Box
-          w="90%"
-          alignSelf="center"
-          bg="$orange100"
-          p="$4"
-          rounded="$lg"
-          mt="$4"
-        >
-          <ResumoDoMes />
-        </Box>
-        {/* Últimos Gastos */}
-        <UltimosGastos despesas={despesas} />
-        {/* Formulário de Adicionar Gasto */}
-        <Box
-          w="95%"
-          alignSelf="center"
-          bg="$white"
-          p="$10"
-          rounded="$lg"
-          mt="$30"
-        >
-          <Text mb="$4" fontSize="$lg" fontWeight="bold" color="$black">
-            Adicionar gasto
-          </Text>
-          <AdicionarGastoForm
-            categorias={categorias}
-            onSalvar={({ valor, categoria, data, descricao, tipo }) => {
-              if (!valor || !categoria || !data || !descricao || !tipo) return;
-              const novaDespesa = {
-                id: Date.now(),
-                nome: categoria.charAt(0).toUpperCase() + categoria.slice(1),
-                valor: parseFloat(valor.replace(",", ".")),
-                data,
-                icone:
-                  categoria.toLowerCase() === "mercado"
-                    ? "🛒"
-                    : categoria.toLowerCase() === "lazer"
-                    ? "🎉"
-                    : "🚗",
-                descricao,
-                tipo,
-              };
-              adicionarDespesa(novaDespesa); // Use o contexto!
-              Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
-            }}
-          />
-        </Box>
-      </ScrollView>
+          </Box>
+        </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }

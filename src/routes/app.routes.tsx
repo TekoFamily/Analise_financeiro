@@ -1,168 +1,130 @@
+import React, {  Suspense } from 'react';
 import {
   BottomTabNavigationProp,
   createBottomTabNavigator,
-  RouteProp
-} from '@react-navigation/bottom-tabs'
-import { gluestackUIConfig } from '../../config/gluestack-ui.config'
+} from '@react-navigation/bottom-tabs';
+import { ActivityIndicator, View, Platform } from 'react-native';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { gluestackUIConfig } from '../../config/gluestack-ui.config';
 
-/* import HomeSvg from '@assets/home.svg' */
+// 🧭 Ícones
+import MoneySvg from '@assets/bakingmoney.svg';
+import ProfileSvg from '@assets/profile.svg';
+import GoalsSvg from '@assets/goals-svgrepo-com.svg';
+import AnalysisIcon from '@assets/dash.svg';
 
-import MoneySvg from '@assets/bakingmoney.svg'
-
-
-import ProfileSvg from '@assets/profile.svg'
-/* import LaptopReportIcon from '@assets/laptop-report-icon.svg' */
-
-import GoalsSvg from '@assets/goals-svgrepo-com.svg' // novo import
-
-import AnalysisIcon from '@assets/dash.svg'
-
-
-
-
-
-
-import { lazy, Suspense } from 'react'
-import { ActivityIndicator, View } from 'react-native'
-import { Platform } from 'react-native'
-import { useSafeAreaInsets } from 'react-native-safe-area-context' // ✅ Este deve ficar
-
-
-
-
-const Home = lazy(() => import('../screens/Home').then(module => ({ default: module.Home })))
-const History = lazy(() => import('../screens/gastos').then(module => ({ default: module.History })))
-const Profile = lazy(() => import('../screens/metas').then(module => ({ default: module.Profile })))
-const Perfil = lazy(() => import('../screens/perfil').then(module => ({ default: module.Perfil })))
-
-
-
-
-// Componente de loading para Suspense
-function LoadingScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
-      <ActivityIndicator size="large" color="#FF9100" />
-    </View>
-  )
-}
-
-
-
-
-/* 
 
 import { Home } from '@screens/Home'
 import { History } from '@screens/gastos'
-import { Profile } from '@screens/metas'
+// ✅ CORREÇÃO: Importar Metas ao invés de Profile
+import { Metas } from '@screens/metas'
 import { Perfil } from '@screens/perfil'
-import { Platform } from 'react-native'
- */
 
 
-
-
-
-
-type AppRoutes = {
-  home: undefined
-  exercise: undefined
-  profile: undefined
-  history: undefined
-}
-
-export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>
-
-const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>()
-
-export function AppRoutes() {
-  const { tokens } = gluestackUIConfig
-  const iconSize = tokens.space['7']
-  const insets = useSafeAreaInsets()
-  const top = insets.top
-  const bottom = insets.bottom
-  const left = insets.left
-  const right = insets.right
-
+// ⏳ Tela de carregamento
+function LoadingScreen() {
   return (
-    <Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: tokens.colors.green500,
-        tabBarInactiveTintColor: tokens.colors.gray200,
-        tabBarStyle: {
-          backgroundColor: tokens.colors.white,
-          borderTopWidth: 2,
-          height: Platform.OS === 'ios' ? 59 + bottom : 96,
-          paddingBottom: bottom,
-          paddingTop: 15, 
-          paddingLeft: left,
-          paddingRight: right,
-        },
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
       }}
     >
+      <ActivityIndicator size="large" color="#FF9100" />
+    </View>
+  );
+}
 
+// 🧱 Tipagem das rotas
+type AppRoutes = {
+  home: undefined;
+  exercise: undefined;
+  profile: undefined;
+  history: undefined;
+};
 
-<Screen
-  name="home"
-  component={() => (
-    <Suspense fallback={<LoadingScreen />}>
-      <Home />
-    </Suspense>
-  )}
-  options={{
-    tabBarIcon: ({ color }) => (
-      <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
-    ),
-  }}
-/>
+export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>;
 
-<Screen
-  name="history"
-  component={() => (
-    <Suspense fallback={<LoadingScreen />}>
-      <History />
-    </Suspense>
-  )}
-  options={{
-    tabBarIcon: ({ color }) => (
-      <MoneySvg fill={color} width={iconSize} height={iconSize} />
-    ),
-  }}
-/>
+const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>();
 
-<Screen
-  name="profile"
-  component={() => (
-    <Suspense fallback={<LoadingScreen />}>
-      <Profile />
-    </Suspense>
-  )}
-  options={{
-    tabBarIcon: ({ color }) => (
-      <GoalsSvg fill={color} width={iconSize} height={iconSize} />
-    ),
-  }}
-/>
+// 🧭 Navegador principal
+export function AppRoutes() {
+  const { tokens } = gluestackUIConfig;
+  const iconSize = tokens.space['7'];
+  const insets = useSafeAreaInsets();
 
-<Screen
-  name="exercise"
-  component={() => (
-    <Suspense fallback={<LoadingScreen />}>
-      <Perfil />
-    </Suspense>
-  )}
-  options={{
-    tabBarIcon: ({ color }) => (
-      <ProfileSvg fill={color} width={iconSize} height={iconSize} />
-    ),
-  }}
-/>
-          
-   
-       
-      
-    </Navigator>
-  )
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: tokens.colors.white,
+        paddingBottom: insets.bottom,
+      }}
+    >
+      <Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: tokens.colors.green500,
+          tabBarInactiveTintColor: tokens.colors.gray200,
+          tabBarStyle: {
+            backgroundColor: tokens.colors.white,
+            borderTopWidth: 2,
+            height: Platform.OS === 'ios' ? 59 + insets.bottom : 96,
+            paddingBottom: insets.bottom,
+            paddingTop: 15,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          },
+        }}
+      >
+        {/* 🏠 Home */}
+        <Screen
+          name="home"
+          component={Home}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 💰 Histórico */}
+        <Screen
+          name="history"
+          component={History}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <MoneySvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 🎯 Metas */}
+        <Screen
+          name="profile"
+          // ✅ CORREÇÃO: Usar Metas ao invés de Profile
+          component={Metas}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <GoalsSvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 👤 Perfil */}
+        <Screen
+          name="exercise"
+          component={Perfil}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <ProfileSvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+      </Navigator>
+    </SafeAreaView>
+  );
 }
