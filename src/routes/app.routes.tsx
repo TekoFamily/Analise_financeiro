@@ -13,13 +13,11 @@ import ProfileSvg from '@assets/profile.svg';
 import GoalsSvg from '@assets/goals-svgrepo-com.svg';
 import AnalysisIcon from '@assets/dash.svg';
 
-
 import { Home } from '@screens/Home'
 import { History } from '@screens/gastos'
 // ✅ CORREÇÃO: Importar Metas ao invés de Profile
 import { Metas } from '@screens/metas'
 import { Perfil } from '@screens/perfil'
-
 
 // ⏳ Tela de carregamento
 function LoadingScreen() {
@@ -60,7 +58,6 @@ export function AppRoutes() {
       style={{
         flex: 1,
         backgroundColor: tokens.colors.white,
-        paddingBottom: insets.bottom,
       }}
     >
       <Navigator
@@ -71,18 +68,14 @@ export function AppRoutes() {
           tabBarInactiveTintColor: tokens.colors.gray200,
           tabBarStyle: {
             backgroundColor: tokens.colors.white,
-            borderTopWidth: 1,
-            height: Platform.OS === 'ios' ? 59 + insets.bottom : 86,
+            borderTopWidth: 0,
+            borderTopColor: tokens.colors.gray300,
+            height: Platform.OS === 'ios' ? 80 + insets.bottom : 70,
             paddingBottom: insets.bottom,
-            paddingTop: 25,
+            paddingTop: 10,
             paddingLeft: insets.left,
             paddingRight: insets.right,
-              // ✅ POSICIONAMENTO absoluto para controle total
-            position: 'absolute',
-            bottom: -5,
-            left: 0,
-            right: 0,
-            elevation: 8, // Sombra no Android
+            elevation: 8,
             shadowColor: '#000',
             shadowOffset: {
               width: 0,
@@ -118,7 +111,6 @@ export function AppRoutes() {
         {/* 🎯 Metas */}
         <Screen
           name="profile"
-          // ✅ CORREÇÃO: Usar Metas ao invés de Profile
           component={Metas}
           options={{
             tabBarIcon: ({ color }) => (
