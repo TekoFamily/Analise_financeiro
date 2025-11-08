@@ -18,7 +18,7 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
   const screenWidth = Dimensions.get("window").width;
 
   return (
-    <VStack w="100%" mt="$6">
+    <VStack w="100%" mt="$4">
       <Text
         px="$4"
         mb="$2"
@@ -31,7 +31,7 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        px="$4"
+        px="$0"
       >
         <HStack space="md">
           {despesas.map((d) => (
@@ -41,11 +41,13 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
               p="$3"
               rounded="$lg"
               width={screenWidth * 0.4}
+              borderWidth={1}
+              borderColor="$gray200"
               shadowColor="#000"
-              shadowOffset={{ width: 0, height: 1 }}
-              shadowOpacity={0.1}
-              shadowRadius={2}
-              elevation={2}
+              shadowOffset={{ width: 0, height: 3 }}
+              shadowOpacity={0.15}
+              shadowRadius={6}
+              elevation={4}
             >
               <Center>
                 <Box

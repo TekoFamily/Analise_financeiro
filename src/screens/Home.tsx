@@ -19,7 +19,7 @@ import { ToggleSaldoButton } from "../components/ToggleSaldoButton";
 import { Image } from "react-native";
 import { useDespesas } from "../context/ExpensesContext"; // já está importado
 import { Alert } from "react-native";
-import { LinearGradient } from 'expo-linear-gradient'; // Corrija para expo-linear-gradient
+// Removido: import { LinearGradient } from 'expo-linear-gradient';
 
 // Tela Home: painel principal do app, mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto
 export function Home() {
@@ -43,7 +43,7 @@ export function Home() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <LinearGradient colors={["#ffe5cd", "#fff"]} style={{ flex: 1 }}>
+      <Box bg="$white" style={{ flex: 1 }}>
         <ScrollView
           style={{ flex: 1 }}
           showsVerticalScrollIndicator={false}
@@ -113,15 +113,25 @@ export function Home() {
           >
             <ResumoDoMes />
           </Box>
-          {/* Últimos Gastos */}
           <Box
-            w="92%"
+            w="95%"
             alignSelf="center"
             bg="$white"
-            p="$5"
-            rounded="$xl"
-            style={{ elevation: 1, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 2 }}
-            mb="$3"
+            p="$6"
+            rounded="$2xl"
+            style={{ 
+              elevation: 10, 
+              shadowColor: '#000', 
+              shadowOpacity: 0.08, 
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 }
+            }}
+            mb="$4"
+            borderWidth={1}
+            borderColor="$gray100"
+          
+
+
           >
             <UltimosGastos despesas={despesas} />
           </Box>
@@ -132,11 +142,11 @@ export function Home() {
             bg="$white"
             p="$7"
             rounded="$2xl"
-            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6 }}
+            style={{ elevation: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 51 }}
             mt="$2"
             mb="$10"
           >
-            <Text mb="$4" fontSize="$xl" fontWeight="bold" color="$white">Adicionar gasto</Text>
+            <Text mb="$4" fontSize="$xl" fontWeight="bold" color="$black">Adicionar gasto</Text>
             <AdicionarGastoForm
               categorias={categorias}
               onSalvar={({ valor, categoria, data, descricao, tipo }) => {
@@ -161,7 +171,7 @@ export function Home() {
             />
           </Box>
         </ScrollView>
-      </LinearGradient>
+      </Box>
     </KeyboardAvoidingView>
   );
 }
