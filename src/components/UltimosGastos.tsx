@@ -1,14 +1,7 @@
 import React from "react";
 import { Box, Text, VStack, HStack, ScrollView, Center } from "@gluestack-ui/themed";
 import { Dimensions } from "react-native";
-
-interface Despesa {
-  id: number;
-  nome: string;
-  valor: number;
-  data: string;
-  icone: string;
-}
+import { Despesa } from "../context/ExpensesContext";
 
 interface UltimosGastosProps {
   despesas: Despesa[];

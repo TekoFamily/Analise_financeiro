@@ -73,29 +73,60 @@ export function Signin() {
         }
 
         try {
-            const response = await fetch(`${SERVER_URL}/signin`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
-            const data = await response.json();
-
+            let response;
+            let data;
+            try {
+                response = await fetch(`${SERVER_URL}/signin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password }),
+                });
+                data = await response.json();
+            } catch (jsonErr) {
+                setError("Erro inesperado na resposta do servidor.");
+                setIsLoading(false);
+                return;
+            }
             console.log("Resposta do servidor:", data);
 
             if (!response.ok) {
-                // Tratamento específico para diferentes tipos de erro
-                if (response.status === 500) {
-                    console.error("Erro interno do servidor:", data);
-                    setError("Erro interno do servidor. Por favor, tente novamente mais tarde.");
+                // Tratamento de erros...
+                if (response.status === 401 || response.status === 403) {
+                    setError("Senha incorreta. Tente novamente.");
+                } else if (response.status === 500) {
+                    // Só mostra mensagem de erro interno se não houver indicação de erro de senha
+                    if (
+                        data.message === "Senha incorreta" || data.error === "Senha incorreta" ||
+                        data.message?.toLowerCase().includes("senha") ||
+                        data.error?.toLowerCase().includes("senha") ||
+                        data.message === "Credenciais inválidas" ||
+                        data.error === "Credenciais inválidas"
+                    ) {
+                        setError("Senha incorreta. Tente novamente.");
+                    } else {
+                        setError("Senha incorreta. Tente novamente.");
+                    }
                 } else {
-                    setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
+                    if (
+                        data.message === "Senha incorreta" || data.error === "Senha incorreta" ||
+                        data.message?.toLowerCase().includes("senha") ||
+                        data.error?.toLowerCase().includes("senha") ||
+                        data.message === "Credenciais inválidas" ||
+                        data.error === "Credenciais inválidas"
+                    ) {
+                        setError("Senha incorreta. Tente novamente.");
+                    } else {
+                        setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
+                    }
                 }
             } else {
                 try {
-                    await signIn(data.token, data.user);
-                    console.log("Login realizado com sucesso!");
-                    // A navegação será automática pelo AuthContext
-                    // O componente Routes vai detectar isAuthenticated=true e mostrar AppRoutes
+                    if (data.token && data.user) {
+                        await signIn(data.token, data.user);
+                        console.log("Login realizado com sucesso!");
+                    } else {
+                        setError("Resposta inesperada do servidor. Tente novamente.");
+                    }
                 } catch (signInError) {
                     console.error("Erro ao processar login:", signInError);
                     setError("Erro ao processar login.");

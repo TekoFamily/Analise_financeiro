@@ -35,6 +35,9 @@ function LoadingScreen() {
   );
 }
 
+
+
+
 // 🧱 Tipagem das rotas
 type AppRoutes = {
   home: undefined;

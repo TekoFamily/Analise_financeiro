@@ -12,6 +12,7 @@ import {
 } from "@gluestack-ui/themed";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Platform } from "react-native";
+import { formatCurrencyInput, parseCurrencyInput } from "../utils/formatUtils";
 
 // Interface que define as propriedades que o componente deve receber
 // categorias: array de strings com as categorias disponíveis
@@ -48,36 +49,12 @@ export function AdicionarGastoForm({
   // Date picker state
   const [actualDate, setActualDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [dataDisplay, setDataDisplay] = useState("DD/MM/AAAA"); // For displaying selected date
+  const [dataDisplay, setDataDisplay] = useState("DD/MM/AAAA");
 
-  // Currency formatting functions
-  const formatCurrency = (rawValue: string) => {
-    if (!rawValue) return "";
-    // First, parse the cleaned string to a number, then divide
-    const numericValueInput = parseFloat(rawValue.replace(/[^\d]/g, ''));
-    if (isNaN(numericValueInput)) return ""; // if input is not a number after cleaning
-
-    const numericValue = (numericValueInput / 100).toFixed(2);
-    // numericValue is now a string like "123.45"
-    const [integerPart, decimalPart] = numericValue.split('.');
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `R$ ${formattedInteger},${decimalPart}`;
-  };
-
-  const parseCurrency = (formattedValue: string) => {
-    if (!formattedValue) return "";
-    return formattedValue.replace(/[^\d,]/g, '').replace(',', '.'); // Keep only digits and comma, then replace comma with dot
-  };
-  
   const handleValorChange = (text: string) => {
-    const rawValue = text.replace(/[^\d]/g, ''); // Remove non-digits
-    setValor(rawValue); // Store the raw numeric string
-    if (rawValue) {
-      const num = parseFloat(rawValue) / 100;
-      setValorDisplay(`R$ ${num.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.')}`);
-    } else {
-      setValorDisplay('');
-    }
+    const rawValue = text.replace(/[^\d]/g, "");
+    setValor(rawValue);
+    setValorDisplay(formatCurrencyInput(rawValue));
   };
 
   // Handle date selection
@@ -105,35 +82,30 @@ export function AdicionarGastoForm({
     setShowDatePicker(true);
   };
   
-  // Função que lida com o salvamento dos dados
-  // Valida se todos os campos estão preenchidos antes de salvar
   const handleSalvar = () => {
-    const valorNumerico = parseCurrency(valorDisplay); // Parse the display value for saving
+    const valorNumerico = parseCurrencyInput(valorDisplay);
     if (!valorNumerico || !categoria || dataDisplay === "DD/MM/AAAA" || !descricao || !tipo) {
       alert("Preencha todos os campos antes de salvar.");
       return;
     }
-    // Chama a função onSalvar passada via props com os dados do formulário
     onSalvar({ valor: valorNumerico, categoria, data: dataDisplay, descricao, tipo });
-    // Limpa os campos após salvar
     setValor("");
-    setValorDisplay(""); // Clear display value
+    setValorDisplay("");
     setCategoria("");
     setDataDisplay("DD/MM/AAAA");
     setActualDate(new Date());
     setDescricao("");
-    setTipo('');
+    setTipo("");
   };
 
-  // Função para limpar todos os campos do formulário
   const handleCancelar = () => {
     setValor("");
-    setValorDisplay(""); // Clear display value
+    setValorDisplay("");
     setCategoria("");
     setDataDisplay("DD/MM/AAAA");
     setActualDate(new Date());
     setDescricao("");
-    setTipo('');
+    setTipo("");
   };
 
   // Função para adicionar nova categoria

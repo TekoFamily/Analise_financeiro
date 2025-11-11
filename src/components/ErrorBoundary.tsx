@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Props {
   children: ReactNode;
@@ -22,6 +23,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary capturou um erro:', error, errorInfo);
+    
+    // Tente limpar dados corrompidos se for erro de JSON
+    if (error.message.includes('JSON') || error.message.includes('parse')) {
+      try {
+        AsyncStorage.clear();
+      } catch (e) {
+        console.error('Erro ao limpar AsyncStorage:', e);
+      }
+    }
   }
 
   render() {

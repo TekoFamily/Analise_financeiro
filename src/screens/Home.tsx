@@ -8,32 +8,22 @@ import {
   VStack,
   HStack,
   ScrollView,
-  Pressable,
 } from "@gluestack-ui/themed";
-import { Dimensions, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { ResumoDoMes } from "../components/ResumoDoMes";
 import { UltimosGastos } from "../components/UltimosGastos";
-
-import { AdicionarGastoForm } from "../components/AdicionarGastoForm"; // Novo componente
+import { AdicionarGastoForm } from "../components/AdicionarGastoForm";
 import { ToggleSaldoButton } from "../components/ToggleSaldoButton";
 import { Image } from "react-native";
-import { useDespesas } from "../context/ExpensesContext"; // já está importado
+import { useDespesas } from "../context/ExpensesContext";
+import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
+import { formatCurrencyDisplay } from "../utils/formatUtils";
 import { Alert } from "react-native";
-// Removido: import { LinearGradient } from 'expo-linear-gradient';
 
 // Tela Home: painel principal do app, mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto
 export function Home() {
-  // Hook do contexto para acessar despesas, função de adicionar e renda
-  const { despesas, adicionarDespesa, renda } = useDespesas();
-
-  // Lista de categorias fixas para o formulário
-  const categorias = ["Mercado", "Lazer", "Transporte"];
-
-  // Calcula o total de gastos e saldo disponível
-  const gastosTotais = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
-  const saldo = (renda || 0) - gastosTotais;
-
-  // Estado para mostrar ou ocultar o saldo
+  const { despesas, criarDespesa, renda, categorias } = useDespesas();
+  const { gastosTotais, saldo } = useFinancialCalculations();
   const [saldoVisivel, setSaldoVisivel] = useState(true);
 
   // Renderização da tela
@@ -74,10 +64,7 @@ export function Home() {
               <HStack alignItems="center" justifyContent="center" space="sm">
                 <Text fontSize="$4xl" fontWeight="bold" color="$black">
                   {saldoVisivel
-                    ? `R$ ${saldo.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`
+                    ? `R$ ${formatCurrencyDisplay(saldo)}`
                     : "••••••"}
                 </Text>
                 <ToggleSaldoButton
@@ -149,24 +136,17 @@ export function Home() {
             <Text mb="$4" fontSize="$xl" fontWeight="bold" color="$black">Adicionar gasto</Text>
             <AdicionarGastoForm
               categorias={categorias}
-              onSalvar={({ valor, categoria, data, descricao, tipo }) => {
-                if (!valor || !categoria || !data || !descricao || !tipo) return;
-                const novaDespesa = {
-                  id: Date.now(),
-                  nome: categoria.charAt(0).toUpperCase() + categoria.slice(1),
-                  valor: parseFloat(valor.replace(",", ".")),
-                  data,
-                  icone:
-                    categoria.toLowerCase() === "mercado"
-                      ? "🛒"
-                      : categoria.toLowerCase() === "lazer"
-                      ? "🎉"
-                      : "🚗",
-                  descricao,
-                  tipo,
-                };
-                adicionarDespesa(novaDespesa); // Use o contexto!
-                Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
+              onSalvar={(dados) => {
+                if (dados.tipo && (dados.tipo === 'fixo' || dados.tipo === 'variavel')) {
+                  criarDespesa({
+                    valor: dados.valor,
+                    categoria: dados.categoria,
+                    data: dados.data,
+                    descricao: dados.descricao,
+                    tipo: dados.tipo,
+                  });
+                  Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
+                }
               }}
             />
           </Box>

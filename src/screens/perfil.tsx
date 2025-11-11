@@ -16,26 +16,21 @@ import {
 import { User as UserIcon, Camera as CameraIcon, CalendarDays as CalendarDaysIcon } from "lucide-react-native";
 import { useDespesas } from "../context/ExpensesContext";
 import { useAuth } from "../context/AuthContext";
+import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
 import { Alert, Platform, KeyboardAvoidingView, StyleSheet } from "react-native";
 import { Input } from "@components/input";
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-
-// Função para formatar valor como moeda brasileira
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value;
-  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-// Função para extrair apenas números do valor formatado
-function parseCurrency(formatted: string) {
-  const numeric = formatted.replace(/\D/g, "");
-  return numeric ? Number(numeric) / 100 : 0;
-}
+import { formatCurrency, parseCurrency } from "../utils/formatUtils";
 
 // Componente principal da tela de perfil
 export function Perfil() {
   const { user, signOut } = useAuth();
+
+  // Proteção: se user não existir, retorna null (componente não renderiza)
+  if (!user) {
+    return null;
+  }
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
@@ -49,9 +44,19 @@ export function Perfil() {
   const [currentFilterDate, setCurrentFilterDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Atualiza os campos quando user mudar (apenas se realmente mudou)
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user?.name, user?.email, user?.phone]);
+
   // Sempre que a renda do contexto mudar, atualize o campo formatado
   useEffect(() => {
-    setIncome(formatCurrency(renda));
+    const formatted = formatCurrency(renda);
+    setIncome(formatted);
   }, [renda]);
 
   const handleSelectImage = async () => {
@@ -96,25 +101,19 @@ export function Perfil() {
     return currentFilterDate.getFullYear().toString();
   }, [currentFilterDate, filterType]);
 
+  // Usar hook para cálculos de despesas
+  const { getDespesasPorPeriodo, getDespesasPorAno } = useFinancialCalculations();
+  
   const filteredDespesas = useMemo(() => {
     const selectedMonth = currentFilterDate.getMonth();
     const selectedYear = currentFilterDate.getFullYear();
 
-    return despesas.filter(d => {
-      if (!d.data || typeof d.data !== 'string') return false;
-      const parts = d.data.split('/');
-      if (parts.length !== 3) return false;
-      // const day = parseInt(parts[0], 10); // Day is not needed for month/year filter
-      const month = parseInt(parts[1], 10) - 1; // Convert to 0-indexed month
-      const year = parseInt(parts[2], 10);
-
-      if (filterType === 'month') {
-        return month === selectedMonth && year === selectedYear;
-      } else { // filterType === 'year'
-        return year === selectedYear;
-      }
-    });
-  }, [despesas, currentFilterDate, filterType]);
+    if (filterType === 'month') {
+      return getDespesasPorPeriodo(selectedMonth, selectedYear);
+    } else {
+      return getDespesasPorAno(selectedYear);
+    }
+  }, [currentFilterDate, filterType, getDespesasPorPeriodo, getDespesasPorAno]);
 
   const totalGastosFiltrados = useMemo(() => {
     return filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
@@ -213,7 +212,14 @@ export function Perfil() {
               mb="$4" 
               bg="$red600"
               rounded="$lg"
-              onPress={signOut}
+              onPress={async () => {
+                try {
+                  await signOut();
+                } catch (error) {
+                  console.error('Erro ao fazer logout:', error);
+                  Alert.alert('Erro', 'Ocorreu um erro ao sair. Tente novamente.');
+                }
+              }}
               sx={{
                 ":pressed": {
                   bg: "$red800"
@@ -296,9 +302,9 @@ export function Perfil() {
               rounded="$lg"
               size="lg"
               sx={{
-                  ":pressed": {
-                      bg: "$orange700"
-                  }
+                ":pressed": {
+                  bg: "$orange700",
+                },
               }}
             >
               <Text color="$white" fontWeight="$bold">

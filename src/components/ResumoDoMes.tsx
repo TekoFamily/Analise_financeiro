@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import { CalendarDays as CalendarDaysIcon } from "lucide-react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { useDespesas } from "../context/ExpensesContext";
+import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
 
 interface CategoriaData {
   name: string;
@@ -43,7 +44,8 @@ const calculateBarHeight = (
 };
 
 export function ResumoDoMes() {
-  const { despesas, renda } = useDespesas();
+  const { renda } = useDespesas();
+  const { getDespesasPorPeriodo, getTotalGastosPorPeriodo } = useFinancialCalculations();
   const [currentFilterDate, setCurrentFilterDate] = useState(new Date());
   const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
@@ -65,16 +67,17 @@ export function ResumoDoMes() {
     currentFilterDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
   ), [currentFilterDate]);
 
-  // Filtra despesas do mês/ano selecionado
+  // Obtém despesas e totais do período selecionado
+  const mes = useMemo(() => currentFilterDate.getMonth(), [currentFilterDate]);
+  const ano = useMemo(() => currentFilterDate.getFullYear(), [currentFilterDate]);
+  
   const filteredDespesas = useMemo(() => {
-    const m = currentFilterDate.getMonth();
-    const y = currentFilterDate.getFullYear();
-    return despesas.filter(d => {
-      if (!d.data || typeof d.data !== 'string') return false;
-      const [dia, mes, ano] = d.data.split('/').map(Number);
-      return mes - 1 === m && ano === y;
-    });
-  }, [despesas, currentFilterDate]);
+    return getDespesasPorPeriodo(mes, ano);
+  }, [getDespesasPorPeriodo, mes, ano]);
+
+  const totalGastos = useMemo(() => {
+    return getTotalGastosPorPeriodo(mes, ano);
+  }, [getTotalGastosPorPeriodo, mes, ano]);
 
   // Soma por categoria
   const totalPorCategoria = useMemo(() => {
@@ -84,10 +87,6 @@ export function ResumoDoMes() {
     });
     return totals;
   }, [filteredDespesas]);
-
-  const totalGastos = useMemo(() => (
-    filteredDespesas.reduce((sum, d) => sum + d.valor, 0)
-  ), [filteredDespesas]);
 
   const categoriasData: CategoriaData[] = useMemo(() => (
     Object.keys(totalPorCategoria).map(cat => {
