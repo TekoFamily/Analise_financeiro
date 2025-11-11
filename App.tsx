@@ -30,22 +30,22 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-    <SafeAreaProvider>
-    <GluestackUIProvider config={config}>
-      <AuthProvider>
-        <DespesasProvider>
-          <MetasProvider>
-            <StatusBar
-              barStyle="dark-content"
-              backgroundColor="#fff"
-              translucent={false}
-            />
-            {fontsLoaded ? <Routes /> : <Loading />}
-          </MetasProvider>
-        </DespesasProvider>
-      </AuthProvider>
-    </GluestackUIProvider>
-    </SafeAreaProvider>
+      <SafeAreaProvider>
+        <GluestackUIProvider config={config}>
+          <AuthProvider>
+            <DespesasProvider>
+              <MetasProvider>
+                <StatusBar
+                  barStyle="dark-content"
+                  backgroundColor="#fff"
+                  translucent={false}
+                />
+                {fontsLoaded ? <Routes /> : <Loading />}
+              </MetasProvider>
+            </DespesasProvider>
+          </AuthProvider>
+        </GluestackUIProvider>
+      </SafeAreaProvider>
     </ErrorBoundary>
-  )
+  );
 }

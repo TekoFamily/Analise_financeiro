@@ -5,10 +5,12 @@ import { Box } from '@gluestack-ui/themed';
 import { AppRoutes } from './app.routes';
 import { AuthProvider, useAuth } from "../context/AuthContext";
 
+export function Routes() {
+  return <RoutesContent />;
+}
+
 function RoutesContent() {
   const { isAuthenticated } = useAuth();
-
-  console.log('[RoutesContent] Renderizado, isAuthenticated:', isAuthenticated);
 
   const theme = DefaultTheme;
   theme.colors.background = gluestackUIConfig.tokens.colors.gray700;
@@ -19,13 +21,5 @@ function RoutesContent() {
         {isAuthenticated ? <AppRoutes /> : <AuthRoutes />}
       </NavigationContainer>
     </Box>
-  );
-}
-
-export function Routes() {
-  return (
-    <AuthProvider>
-      <RoutesContent />
-    </AuthProvider>
   );
 }

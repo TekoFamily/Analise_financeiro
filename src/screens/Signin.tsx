@@ -34,15 +34,13 @@ import { Input } from "@components/input";
 import { Button } from "@components/Button";
 
 // Import useState
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from "../context/AuthContext";
 import { Spinner } from "@gluestack-ui/themed";
 
 const SERVER_URL = "http://100.66.7.63:3000"; // Atualizado para o IP da máquina
 
 export function Signin() {
-    console.log('[Signin] Renderizado');
-    
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
     const { signIn } = useAuth();
 
@@ -54,17 +52,14 @@ export function Signin() {
     const [error, setError] = useState<string | null>(null);
 
 
-    function handleNewAccount() {
+    const handleNewAccount = useCallback(() => {
         navigation.navigate("SignUp");
-    }
+    }, [navigation]);
 
     // Form submission handler
-    async function handleSignIn() {
+    const handleSignIn = useCallback(async () => {
         setIsLoading(true);
         setError(null);
-
-        console.log("Tentando conectar ao servidor...");
-        console.log("URL:", `${SERVER_URL}/signin`);
 
         if (!email || !password) {
             setError("Por favor, preencha todos os campos.");
@@ -73,72 +68,49 @@ export function Signin() {
         }
 
         try {
-            let response;
+            const response = await fetch(`${SERVER_URL}/signin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
             let data;
             try {
-                response = await fetch(`${SERVER_URL}/signin`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, password }),
-                });
                 data = await response.json();
             } catch (jsonErr) {
                 setError("Erro inesperado na resposta do servidor.");
                 setIsLoading(false);
                 return;
             }
-            console.log("Resposta do servidor:", data);
 
             if (!response.ok) {
                 // Tratamento de erros...
                 if (response.status === 401 || response.status === 403) {
                     setError("Senha incorreta. Tente novamente.");
-                } else if (response.status === 500) {
-                    // Só mostra mensagem de erro interno se não houver indicação de erro de senha
-                    if (
-                        data.message === "Senha incorreta" || data.error === "Senha incorreta" ||
-                        data.message?.toLowerCase().includes("senha") ||
-                        data.error?.toLowerCase().includes("senha") ||
-                        data.message === "Credenciais inválidas" ||
-                        data.error === "Credenciais inválidas"
-                    ) {
-                        setError("Senha incorreta. Tente novamente.");
-                    } else {
-                        setError("Senha incorreta. Tente novamente.");
-                    }
+                } else if (
+                    data.message?.toLowerCase().includes("senha") ||
+                    data.error?.toLowerCase().includes("senha") ||
+                    data.message === "Credenciais inválidas" ||
+                    data.error === "Credenciais inválidas"
+                ) {
+                    setError("Senha incorreta. Tente novamente.");
                 } else {
-                    if (
-                        data.message === "Senha incorreta" || data.error === "Senha incorreta" ||
-                        data.message?.toLowerCase().includes("senha") ||
-                        data.error?.toLowerCase().includes("senha") ||
-                        data.message === "Credenciais inválidas" ||
-                        data.error === "Credenciais inválidas"
-                    ) {
-                        setError("Senha incorreta. Tente novamente.");
-                    } else {
-                        setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
-                    }
+                    setError(data.message || data.error || "Falha no login. Verifique suas credenciais.");
                 }
             } else {
-                try {
-                    if (data.token && data.user) {
-                        await signIn(data.token, data.user);
-                        console.log("Login realizado com sucesso!");
-                    } else {
-                        setError("Resposta inesperada do servidor. Tente novamente.");
-                    }
-                } catch (signInError) {
-                    console.error("Erro ao processar login:", signInError);
-                    setError("Erro ao processar login.");
+                if (data.token && data.user) {
+                    await signIn(data.token, data.user);
+                } else {
+                    setError("Resposta inesperada do servidor. Tente novamente.");
                 }
             }
         } catch (err) {
             console.error("Erro ao conectar ao servidor:", err);
             setError("Erro de conexão com o servidor.");
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
-    }
+    }, [email, password, signIn]);
 
 
 
