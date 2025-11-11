@@ -94,7 +94,7 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
 
   // Função auxiliar para confirmar e adicionar valor
   const confirmarEAdicionarValor = useCallback((metaId: string, valor: number, meta: Meta) => {
-    // Atualizar meta E registrar gasto em uma única operação de estado
+    // Atualizar meta
     setMetas(prev => 
       prev.map(m => 
         m.id === metaId 
@@ -103,19 +103,18 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
       )
     );
     
-    // Registrar como gasto (fora do setState)
-    setTimeout(() => {
-      adicionarDespesa({
-        id: Date.now(),
-        nome: `Meta: ${meta.nome}`,
-        valor: valor,
-        data: new Date().toLocaleDateString('pt-BR'),
-        icone: "��",
-        descricao: `Valor adicionado à meta: ${meta.nome}`,
-        tipo: "variavel",
-      });
-      Alert.alert("Sucesso", "Valor adicionado à meta e registrado como gasto!");
-    }, 0);
+    // Registrar como gasto imediatamente (não usar setTimeout)
+    adicionarDespesa({
+      id: Date.now(),
+      nome: `Meta: ${meta.nome}`,
+      valor: valor,
+      data: new Date().toLocaleDateString('pt-BR'),
+      icone: "��",
+      descricao: `Valor adicionado à meta: ${meta.nome}`,
+      tipo: "variavel",
+    });
+    
+    Alert.alert("Sucesso", "Valor adicionado à meta e registrado como gasto!");
   }, [adicionarDespesa]);
 
   // Adicionar valor à meta

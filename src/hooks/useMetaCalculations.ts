@@ -1,27 +1,14 @@
 import { useMemo } from "react";
 import { Meta } from "../context/MetasContext";
 
-// Simplifique o cache de data:
-let cachedNow = 0;
-let cacheTime = 0;
-
-function getCurrentTime(): number {
-  const now = Date.now();
-  // Cache por 5 segundos para reduzir cálculos
-  if (now - cacheTime > 5000) {
-    cachedNow = now;
-    cacheTime = now;
-  }
-  return cachedNow;
-}
-
 export function useMetaCalculations(meta: Meta) {
   const progresso = useMemo(() => {
     return meta.valor > 0 ? (meta.valorAtual / meta.valor) * 100 : 0;
   }, [meta.valor, meta.valorAtual]);
 
   const diasRestantes = useMemo(() => {
-    const now = getCurrentTime();
+    // Calcular diretamente sem cache global problemático
+    const now = Date.now();
     return Math.ceil((meta.prazo.getTime() - now) / (1000 * 60 * 60 * 24));
   }, [meta.prazo]);
 

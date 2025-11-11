@@ -19,7 +19,6 @@ const { Navigator, Screen } = createNativeStackNavigator<AuthRoutes>();
 
 
 export  function AuthRoutes() {
-  console.log('[AuthRoutes] Renderizado');
   
   return (
     <Navigator  screenOptions={{ headerShown: false }}>

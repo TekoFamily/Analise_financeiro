@@ -24,14 +24,15 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary capturou um erro:', error, errorInfo);
     
-    // Tente limpar dados corrompidos se for erro de JSON
-    if (error.message.includes('JSON') || error.message.includes('parse')) {
-      try {
-        AsyncStorage.clear();
-      } catch (e) {
-        console.error('Erro ao limpar AsyncStorage:', e);
-      }
+    // Tentar limpar dados corrompidos
+    try {
+      AsyncStorage.clear();
+    } catch (e) {
+      console.error('Erro ao limpar AsyncStorage:', e);
     }
+    
+    // Reset state
+    this.setState({ hasError: true, error });
   }
 
   render() {
