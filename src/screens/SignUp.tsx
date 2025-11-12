@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
 import { Button } from "@components/base/Button";
 import { useState } from "react";
+import { theme } from "../config/theme";
 
 /* o typescript nao tava entendendo o ".png" entao tive que criar um arquivo types para isso */
 
@@ -122,7 +123,7 @@ export function SignUp() {
       >
         {isLoading ? (
           <Center flex={1} bg="white" h="$full">
-            <Spinner size="large" color="$green600" />
+            <Spinner size="large" color={theme.colors.primary} />
           </Center>
         ) : (
           <VStack px="$10" pb="$10" w="$full" bg="white">
@@ -237,7 +238,7 @@ export function SignUp() {
               title="Cadastrar"
               mt="$10"
               mb="$6"
-              bg="#FF9100"
+              bg={theme.colors.accent}
               sx={{
                 ":pressed": {
                   bg: "$orange700",
@@ -255,7 +256,7 @@ export function SignUp() {
                 </Text>
                 <Link onPress={handleGoBackToLogin}>
                   <LinkText
-                    color="#FF9100"
+                    color={theme.colors.accent}
                     fontSize="$sm"
                     fontFamily="$body"
                     fontWeight="$bold"

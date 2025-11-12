@@ -22,6 +22,7 @@
 
 import { StatusBar } from "react-native";
 import React, { useEffect } from "react"; // Adicione useEffect
+import { theme } from "./src/config/theme";
 
 import * as NavigationBar from "expo-navigation-bar"; // Comentado - pode causar problemas no Expo Go
 
@@ -62,7 +63,7 @@ export default function App() {
               <MetasProvider>
                 <StatusBar
                   barStyle="dark-content"
-                  backgroundColor="#fff"
+                  backgroundColor={theme.colors.surface}
                   translucent={false}
                 />
                 {fontsLoaded ? <Routes /> : <Loading />}

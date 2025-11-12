@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from "react-native-safe-area-context";
 import { gluestackUIConfig } from "../../config/gluestack-ui.config";
+import { theme } from "../config/theme";
 
 // 🧭 Ícones
 import MoneySvg from "@assets/bakingmoney.svg";
@@ -30,10 +31,10 @@ function LoadingScreen() {
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#f5f5f5",
+        backgroundColor: theme.colors.background,
       }}
     >
-      <ActivityIndicator size="large" color="#FF9100" />
+      <ActivityIndicator size="large" color={theme.colors.accent} />
     </View>
   );
 }

@@ -15,6 +15,7 @@ import {
   HStack,
 } from "@gluestack-ui/themed";
 import { KeyboardAvoidingView, Platform } from "react-native";
+import { theme } from "../config/theme";
 
 /* o typescript nao tava entendendo o ".png" entao tive que criar um arquivo types para isso */
 
@@ -176,7 +177,7 @@ export function Signin() {
       >
         {isLoading ? (
           <Center flex={1} bg="white" h="$full">
-            <Spinner size="large" color="$green600" />
+            <Spinner size="large" color={theme.colors.primary} />
           </Center>
         ) : (
           <VStack flex={1} px="$10" justifyContent="center">
@@ -244,7 +245,7 @@ export function Signin() {
               title="Entrar"
               mt="$10"
               mb="$6"
-              bg="#ff2200ff" // Orange color from image
+              bg={theme.colors.accent}
               sx={{
                 ":pressed": {
                   bg: "$orange700",
@@ -262,7 +263,7 @@ export function Signin() {
                 </Text>
                 <Link onPress={handleNewAccount}>
                   <LinkText
-                    color="#FF9100"
+                    color={theme.colors.accent}
                     fontSize="$sm"
                     fontFamily="$body"
                     fontWeight="$bold"

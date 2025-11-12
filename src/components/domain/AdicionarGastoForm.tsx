@@ -18,6 +18,7 @@ import {
   formatCurrencyInput,
   parseCurrencyInput,
 } from "../../utils/formatUtils";
+import { theme } from "../../config/theme";
 
 // Interface que define as propriedades que o componente deve receber
 // categorias: array de strings com as categorias disponíveis
@@ -194,7 +195,11 @@ export function AdicionarGastoForm({
               onChangeText={setNovaCategoria}
             />
           </Input>
-          <Button flex={1} bg="$green500" onPress={handleAdicionarCategoria}>
+          <Button
+            flex={1}
+            bg={theme.colors.success}
+            onPress={handleAdicionarCategoria}
+          >
             <Text color="$white">Salvar</Text>
           </Button>
           <Button

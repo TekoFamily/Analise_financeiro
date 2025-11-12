@@ -33,6 +33,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { formatCurrency, parseCurrency } from "../utils/formatUtils";
+import { theme } from "../config/theme";
 
 // Componente principal da tela de perfil
 export function Perfil() {
@@ -199,7 +200,7 @@ export function Perfil() {
             <Button
               mt="$2"
               mb="$2"
-              bg="$orange500"
+              bg={theme.colors.accent}
               rounded="$lg"
               onPress={() => {
                 Alert.alert(

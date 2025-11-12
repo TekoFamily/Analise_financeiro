@@ -31,6 +31,7 @@ import { CalendarDays as CalendarIcon, X } from "lucide-react-native";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import { theme } from "../config/theme";
 
 // Componente para exibir uma meta individual
 function MetaCard({ meta }: { meta: any }) {
@@ -92,7 +93,7 @@ function MetaCard({ meta }: { meta: any }) {
             </Text>
             <Text
               fontSize="$sm"
-              color={prazoExpirado ? "$red600" : "$green600"}
+              color={prazoExpirado ? theme.colors.danger : theme.colors.success}
               fontWeight="bold"
             >
               {prazoExpirado
@@ -108,7 +109,9 @@ function MetaCard({ meta }: { meta: any }) {
           <VStack space="xs">
             <Progress value={Math.min(progresso, 100)} size="md">
               <ProgressFilledTrack
-                bg={progresso >= 100 ? "$green600" : "$orange600"}
+                bg={
+                  progresso >= 100 ? theme.colors.success : theme.colors.warning
+                }
               />
             </Progress>
             <HStack justifyContent="space-between">
@@ -124,10 +127,10 @@ function MetaCard({ meta }: { meta: any }) {
           <Box
             bg={
               progresso >= 100
-                ? "$green100"
+                ? theme.colors.green100
                 : prazoExpirado
-                  ? "$red100"
-                  : "$orange100"
+                  ? theme.colors.red100
+                  : theme.colors.orange100
             }
             borderRadius="$md"
             p="$2"
@@ -137,10 +140,10 @@ function MetaCard({ meta }: { meta: any }) {
               fontWeight="bold"
               color={
                 progresso >= 100
-                  ? "$green700"
+                  ? theme.colors.green700
                   : prazoExpirado
-                    ? "$red700"
-                    : "$orange700"
+                    ? theme.colors.red700
+                    : theme.colors.orange700
               }
               textAlign="center"
             >
@@ -154,7 +157,7 @@ function MetaCard({ meta }: { meta: any }) {
 
           <Button
             mt="$2"
-            bg="$orange600"
+            bg={theme.colors.warning}
             onPress={() => setModalVisible(true)}
             isDisabled={progresso >= 100}
           >
@@ -198,7 +201,11 @@ function MetaCard({ meta }: { meta: any }) {
               >
                 <Text color="$white">Cancelar</Text>
               </Button>
-              <Button bg="$green600" onPress={handleAdicionarValor} flex={1}>
+              <Button
+                bg={theme.colors.success}
+                onPress={handleAdicionarValor}
+                flex={1}
+              >
                 <Text color="$white">Adicionar</Text>
               </Button>
             </HStack>
@@ -378,7 +385,7 @@ export function Metas() {
 
                 <Button
                   mt="$2"
-                  bg="$orange600"
+                  bg={theme.colors.warning}
                   onPress={handleAdicionarMeta}
                   isDisabled={
                     !nome.trim() || !valor || !prazo || !categoria.trim()
