@@ -69,20 +69,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             // Faz o parse do JSON do usuário
             const parsedUser = JSON.parse(userData);
-            setUser(parsedUser); // Armazena no estado
-            setIsAuthenticated(true); // Define que está autenticado
+
+            // Validar estrutura básica do usuário
+            if (
+              parsedUser &&
+              typeof parsedUser === "object" &&
+              parsedUser.email &&
+              parsedUser.name
+            ) {
+              if (isMounted.current) {
+                setUser(parsedUser); // Armazena no estado
+                setIsAuthenticated(true); // Define que está autenticado
+              }
+            } else {
+              console.warn("Dados de usuário inválidos, limpando storage");
+              await Promise.all([
+                AsyncStorage.removeItem("token"),
+                AsyncStorage.removeItem("user"),
+              ]);
+            }
           } catch (parseError) {
             // Caso os dados do usuário estejam corrompidos, remove tudo do AsyncStorage
             console.error("Erro ao fazer parse do usuário:", parseError);
             await Promise.all([
               AsyncStorage.removeItem("token"),
               AsyncStorage.removeItem("user"),
-            ]);
+            ]).catch((cleanupError) => {
+              console.error("Erro ao limpar dados corrompidos:", cleanupError);
+            });
           }
         }
       } catch (error) {
         // Se der erro ao tentar carregar, mostra no console
         console.error("Erro ao carregar dados de autenticação:", error);
+        // Garantir que estado seja consistente em caso de erro
+        if (isMounted.current) {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
     };
 
@@ -100,13 +124,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Função que realiza o login e salva as informações no AsyncStorage
   const signIn = useCallback(async (token: string, userData: User) => {
     try {
+      // Validar dados antes de salvar
+      if (!token || typeof token !== "string" || token.trim() === "") {
+        throw new Error("Token inválido");
+      }
+
+      if (
+        !userData ||
+        typeof userData !== "object" ||
+        !userData.email ||
+        !userData.name
+      ) {
+        throw new Error("Dados de usuário inválidos");
+      }
+
       // Limpa dados antigos antes de salvar os novos
-      await AsyncStorage.removeItem("token");
-      await AsyncStorage.removeItem("user");
+      await Promise.all([
+        AsyncStorage.removeItem("token"),
+        AsyncStorage.removeItem("user"),
+      ]);
 
       // Armazena o novo token e dados do usuário
-      await AsyncStorage.setItem("token", token);
-      await AsyncStorage.setItem("user", JSON.stringify(userData));
+      await Promise.all([
+        AsyncStorage.setItem("token", token.trim()),
+        AsyncStorage.setItem("user", JSON.stringify(userData)),
+      ]);
 
       // Atualiza os estados locais
       setUser(userData);
@@ -117,8 +159,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setIsAuthenticated(false);
       try {
-        await AsyncStorage.removeItem("token");
-        await AsyncStorage.removeItem("user");
+        await Promise.all([
+          AsyncStorage.removeItem("token"),
+          AsyncStorage.removeItem("user"),
+        ]);
       } catch (clearError) {
         console.error("Erro ao limpar dados após falha de login:", clearError);
       }
@@ -129,20 +173,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Função que realiza o logout, limpando o AsyncStorage e os estados
   const signOut = useCallback(async () => {
     try {
+      // Limpa os estados locais primeiro para feedback imediato
+      setUser(null);
+      setIsAuthenticated(false);
+
       // Remove token e usuário do armazenamento local
       await Promise.all([
         AsyncStorage.removeItem("token"),
         AsyncStorage.removeItem("user"),
       ]);
-
-      // Limpa os estados locais
-      setUser(null);
-      setIsAuthenticated(false);
     } catch (error) {
       // Em caso de erro, também garante que o estado volte ao padrão
       console.error("Erro ao fazer logout:", error);
+      // Garante que os estados estejam limpos mesmo com erro
       setUser(null);
       setIsAuthenticated(false);
+      // Não relançar o erro, pois o logout deve sempre limpar o estado
     }
   }, []);
 

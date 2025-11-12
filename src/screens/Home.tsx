@@ -10,14 +10,14 @@
 // src/utils/ → Funções auxiliares (formatação, cálculos, etc.)
 // src/config/ → Configurações globais (tema, API, ambiente)
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Center,
   Text,
   Box,
   VStack,
   HStack,
-  ScrollView,
+  FlatList,
 } from "@gluestack-ui/themed";
 import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { ResumoDoMes } from "../components/domain/ResumoDoMes";
@@ -37,27 +37,35 @@ export function Home() {
   const { gastosTotais, saldo } = useFinancialCalculations();
   const [saldoVisivel, setSaldoVisivel] = useState(true);
 
-  // Renderização da tela
-  return (
-    <KeyboardAvoidingView
-      style={styles.keyboardAvoidingView}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
-      <Box bg="$white" style={{ flex: 1 }}>
-        <ScrollView
-          style={{ flex: 1 }}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollViewContentContainer,
-            {
-              paddingBottom: theme.spacing.xl,
-              paddingHorizontal: theme.spacing.md,
-            },
-          ]} // margem inferior para não colar
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* 🔽 Header - pode mover para o topo ou esconder em telas menores */}
+  // Otimização: useCallback estabiliza as funções, evitando que os componentes
+  // filhos que as recebem como props renderizem desnecessariamente.
+  const handleToggleSaldo = useCallback(() => {
+    setSaldoVisivel((v) => !v);
+  }, []);
+
+  const handleSalvarGasto = useCallback(
+    (dados) => {
+      if (dados.tipo && (dados.tipo === "fixo" || dados.tipo === "variavel")) {
+        criarDespesa({
+          valor: dados.valor,
+          categoria: dados.categoria,
+          data: dados.data,
+          descricao: dados.descricao,
+          tipo: dados.tipo,
+        });
+        Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
+      }
+    },
+    [criarDespesa],
+  );
+
+  // Otimização: useMemo previne a re-renderização de componentes pesados
+  // que não dependem de estados que mudam com frequência (como saldoVisivel).
+  const sections = useMemo(
+    () => [
+      {
+        key: "header",
+        component: (
           <Box
             w="95%"
             alignSelf="center"
@@ -93,7 +101,7 @@ export function Home() {
                 </Text>
                 <ToggleSaldoButton
                   visivel={saldoVisivel}
-                  onToggle={() => setSaldoVisivel((v) => !v)}
+                  onToggle={handleToggleSaldo}
                 />
               </HStack>
               <HStack
@@ -116,7 +124,11 @@ export function Home() {
               </HStack>
             </VStack>
           </Box>
-          {/* 📊 Resumo do mês - card principal que redimensiona automaticamente conforme a tela */}
+        ),
+      },
+      {
+        key: "resumo",
+        component: (
           <Box
             w="92%"
             alignSelf="center"
@@ -133,27 +145,15 @@ export function Home() {
           >
             <ResumoDoMes />
           </Box>
-          {/* 🧾 Últimos gastos - lista rolável; pode ficar abaixo do resumo em telas pequenas */}
-          <Box
-            w="95%"
-            alignSelf="center"
-            bg="$white"
-            p="$6"
-            rounded="$2xl"
-            style={{
-              elevation: 10,
-              shadowColor: "#000",
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-            }}
-            mb="$4"
-            borderWidth={1}
-            borderColor="$gray100"
-          >
-            <UltimosGastos despesas={despesas} />
-          </Box>
-          {/* 💬 Adicionar gasto - pode ser reposicionado abaixo do gráfico; campos se adaptam ao teclado */}
+        ),
+      },
+      {
+        key: "gastos",
+        component: <UltimosGastos despesas={despesas} />,
+      },
+      {
+        key: "form",
+        component: (
           <Box
             w="92%"
             alignSelf="center"
@@ -174,25 +174,46 @@ export function Home() {
             </Text>
             <AdicionarGastoForm
               categorias={categorias}
-              onSalvar={(dados) => {
-                if (
-                  dados.tipo &&
-                  (dados.tipo === "fixo" || dados.tipo === "variavel")
-                ) {
-                  criarDespesa({
-                    valor: dados.valor,
-                    categoria: dados.categoria,
-                    data: dados.data,
-                    descricao: dados.descricao,
-                    tipo: dados.tipo,
-                  });
-                  Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
-                }
-              }}
+              onSalvar={handleSalvarGasto}
             />
           </Box>
-        </ScrollView>
-      </Box>
+        ),
+      },
+    ],
+    [
+      saldo,
+      saldoVisivel,
+      handleToggleSaldo,
+      renda,
+      gastosTotais,
+      despesas,
+      categorias,
+      handleSalvarGasto,
+    ],
+  );
+
+  const renderItem = useCallback(({ item }) => item.component, []);
+
+  // Renderização da tela
+  return (
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingView}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <FlatList
+        data={sections}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.key}
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContentContainer}
+        keyboardShouldPersistTaps="handled"
+        // Otimizações de performance da FlatList
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -201,11 +222,10 @@ const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
     backgroundColor: theme.colors.background, // 🎨 Fundo padrão do app
-    padding: theme.spacing.md, // 🧭 Controle central de espaçamento
   },
   scrollViewContentContainer: {
-    flexGrow: 5,
-    // Removido paddingBottom: 80 para evitar espaço extra acima do teclado
+    flexGrow: 1,
+    paddingBottom: 80, // Espaço no final da lista
   },
   // You can move other inline styles here if needed, for example:
   // logoImage: {

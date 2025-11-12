@@ -263,6 +263,143 @@ Se encontrar erros de import do tema, verifique:
 
 ---
 
+---
+
+## 🎯 Atualização: Correção de Interatividade dos Botões
+
+### Problema Identificado
+Os botões não estavam mostrando feedback visual quando pressionados, pois os estados `:pressed` e `$pressed` ainda usavam cores hardcoded (como `$orange700`, `$green700`, etc.) ao invés das cores do tema centralizado.
+
+### Correções Aplicadas (Interatividade)
+
+#### 1. **Signin.tsx** ✅
+```tsx
+// ❌ Antes
+sx={{ ":pressed": { bg: "$green700" } }}
+
+// ✅ Depois
+sx={{ ":pressed": { bg: theme.colors.orange700 } }}
+```
+
+#### 2. **SignUp.tsx** ✅
+```tsx
+// ❌ Antes
+sx={{ ":pressed": { bg: "$orange700" } }}
+
+// ✅ Depois
+sx={{ ":pressed": { bg: theme.colors.orange700 } }}
+```
+
+#### 3. **perfil.tsx** ✅
+**Botão Limpar Dados:**
+```tsx
+// ❌ Antes
+sx={{ ":pressed": { bg: "$orange700" } }}
+
+// ✅ Depois
+sx={{ ":pressed": { bg: theme.colors.orange700 } }}
+```
+
+**Botão Sair:**
+```tsx
+// ❌ Antes
+sx={{ ":pressed": { bg: "$red800" } }}
+
+// ✅ Depois
+sx={{ ":pressed": { bg: theme.colors.red800 } }}
+```
+
+**Botão Salvar Alterações:**
+```tsx
+// ❌ Antes
+sx={{ ":pressed": { bg: "$orange700" } }}
+
+// ✅ Depois
+sx={{ ":pressed": { bg: theme.colors.orange700 } }}
+```
+
+#### 4. **AdicionarGastoForm.tsx** ✅
+**Botão Adicionar nova categoria:**
+```tsx
+// ❌ Antes
+bg="$orange500"
+// Sem estado pressed
+
+// ✅ Depois
+bg={theme.colors.accent}
+$pressed={{ bg: theme.colors.orange700 }}
+```
+
+**Botão Salvar (nova categoria):**
+```tsx
+// ❌ Antes
+bg={theme.colors.success}
+// Sem estado pressed
+
+// ✅ Depois
+bg={theme.colors.success}
+$pressed={{ bg: theme.colors.green700 }}
+```
+
+**Botão Cancelar (nova categoria):**
+```tsx
+// ❌ Antes
+bg="$gray400"
+// Sem estado pressed
+
+// ✅ Depois
+bg={theme.colors.gray400}
+$pressed={{ bg: theme.colors.gray500 }}
+```
+
+**Botões Tipo de Gasto (Fixo/Variável):**
+```tsx
+// ❌ Antes
+bg={tipo === "fixo" ? "$orange500" : "$gray200"}
+// Sem estado pressed
+
+// ✅ Depois
+bg={tipo === "fixo" ? theme.colors.accent : theme.colors.gray200}
+$pressed={{
+  bg: tipo === "fixo" ? theme.colors.orange700 : theme.colors.gray300,
+}}
+```
+
+**Botão Salvar (formulário):**
+```tsx
+// ❌ Antes
+bg="$orange500"
+$pressed={{ bg: theme.colors.warning }}
+
+// ✅ Depois
+bg={theme.colors.accent}
+$pressed={{ bg: theme.colors.orange700 }}
+```
+
+**Botão Cancelar (formulário):**
+```tsx
+// ❌ Antes
+bg="$gray400"
+$pressed={{ bg: "$gray500" }}
+
+// ✅ Depois
+bg={theme.colors.gray400}
+$pressed={{ bg: theme.colors.gray500 }}
+```
+
+### Resumo das Correções de Interatividade
+- **Total de botões corrigidos:** 13 botões
+- **Arquivos atualizados:** 4 arquivos
+- **Estados corrigidos:** `:pressed` e `$pressed`
+
+### Resultado
+✅ Todos os botões agora exibem feedback visual correto quando pressionados  
+✅ Todas as cores de interação usam o tema centralizado  
+✅ Consistência de comportamento em toda a aplicação  
+
+---
+
 **Data da Implementação:** Novembro 2024  
+**Última Atualização:** Novembro 2024 - Correção de Interatividade  
 **Status:** ✅ Concluído  
-**Versão do Documento:** 1.0
+**Versão do Documento:** 1.1

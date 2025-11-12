@@ -181,7 +181,8 @@ export function AdicionarGastoForm({
       {!adicionandoCategoria ? (
         <Button
           mt="$2"
-          bg="$orange500"
+          bg={theme.colors.accent}
+          $pressed={{ bg: theme.colors.orange700 }}
           onPress={() => setAdicionandoCategoria(true)}
         >
           <Text color="$white">Adicionar nova categoria</Text>
@@ -198,13 +199,15 @@ export function AdicionarGastoForm({
           <Button
             flex={1}
             bg={theme.colors.success}
+            $pressed={{ bg: theme.colors.green700 }}
             onPress={handleAdicionarCategoria}
           >
             <Text color="$white">Salvar</Text>
           </Button>
           <Button
             flex={1}
-            bg="$gray400"
+            bg={theme.colors.gray400}
+            $pressed={{ bg: theme.colors.gray500 }}
             onPress={() => {
               setAdicionandoCategoria(false);
               setNovaCategoria("");
@@ -221,14 +224,23 @@ export function AdicionarGastoForm({
       <HStack space="md" mb="$2">
         <Button
           flex={1}
-          bg={tipo === "fixo" ? "$orange500" : "$gray200"}
+          bg={tipo === "fixo" ? theme.colors.accent : theme.colors.gray200}
+          $pressed={{
+            bg: tipo === "fixo" ? theme.colors.orange700 : theme.colors.gray300,
+          }}
           onPress={() => setTipo("fixo")}
         >
           <Text color={tipo === "fixo" ? "$white" : "$gray900"}>Fixo</Text>
         </Button>
         <Button
           flex={1}
-          bg={tipo === "variavel" ? "$orange500" : "$gray200"}
+          bg={tipo === "variavel" ? theme.colors.accent : theme.colors.gray200}
+          $pressed={{
+            bg:
+              tipo === "variavel"
+                ? theme.colors.orange700
+                : theme.colors.gray300,
+          }}
           onPress={() => setTipo("variavel")}
         >
           <Text color={tipo === "variavel" ? "$white" : "$gray900"}>
@@ -271,9 +283,8 @@ export function AdicionarGastoForm({
         {/* Botão Salvar - Cor laranja com efeito de pressionar */}
         <Button
           flex={1}
-          bg="$orange500"
-         // $pressed={{ bg: "$orange600" }} errado
-          $pressed={{ bg: theme.colors.warning }} //correto
+          bg={theme.colors.accent}
+          $pressed={{ bg: theme.colors.orange700 }}
           onPress={handleSalvar}
         >
           <Text color="$white" fontWeight="bold">
@@ -283,8 +294,8 @@ export function AdicionarGastoForm({
         {/* Botão Cancelar - Cor cinza com efeito de pressionar */}
         <Button
           flex={1}
-          bg="$gray400"
-          $pressed={{ bg: "$gray500" }}
+          bg={theme.colors.gray400}
+          $pressed={{ bg: theme.colors.gray500 }}
           onPress={handleCancelar}
         >
           <Text color="$white" fontWeight="bold">

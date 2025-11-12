@@ -39,7 +39,8 @@ import { Input } from "@components/base/Input";
 
 /* importando o butao */
 
-import { Button } from "@components/base/Button";
+//import { Button } from "@components/base/Button";
+import { Button } from "@gluestack-ui/themed";
 
 // Import useState
 import { useState, useCallback } from "react";
@@ -58,6 +59,7 @@ export function Signin() {
   // Optional: state for loading and error handling
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPressed, setIsPressed] = useState(false);
 
   const handleNewAccount = useCallback(() => {
     navigation.navigate("SignUp");
@@ -242,19 +244,19 @@ export function Signin() {
             </VStack>
 
             <Button
-              title="Entrar"
               mt="$10"
               mb="$6"
-              bg={theme.colors.accent}
-              sx={{
-                ":pressed": {
-                  bg: "$orange700",
-                },
-              }}
-              rounded="$lg" // Increased border radius
-              onPress={handleSignIn} // Call the submission handler
-              disabled={isLoading} // Disable button when loading
-            />
+              bg={isPressed ? theme.colors.success : theme.colors.accent}
+              rounded="$lg"
+              onPressIn={() => setIsPressed(true)}
+              onPressOut={() => setIsPressed(false)}
+              onPress={handleSignIn}
+              disabled={isLoading}
+            >
+              <Text color="$white" fontWeight="bold">
+                Entrar
+              </Text>
+            </Button>
 
             <Center>
               <HStack>

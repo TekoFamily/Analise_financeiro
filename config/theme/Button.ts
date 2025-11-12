@@ -71,7 +71,7 @@ export const Button = createStyle({
 
         '_spinner': {
           'props': {
-            color: '$primary600',
+            color: '$orange700',
           },
           ':hover': {
             props: {

@@ -241,7 +241,7 @@ export function SignUp() {
               bg={theme.colors.accent}
               sx={{
                 ":pressed": {
-                  bg: "$orange700",
+                  bg: theme.colors.orange700,
                 },
               }}
               rounded="$lg"

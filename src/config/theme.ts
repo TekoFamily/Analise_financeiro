@@ -198,7 +198,23 @@ export const theme = {
   radii,
   shadow,
   other,
+
+  animations: {
+    buttonPress: {
+      scale: 0.96,
+      opacity: 0.9,
+      duration: 150,
+    },
+    buttonHover: {
+      scale: 1.02,
+      duration: 200,
+    }
+  }
+
+
+
 } as const;
+
 
 // 🛠️ Helpers opcionais
 

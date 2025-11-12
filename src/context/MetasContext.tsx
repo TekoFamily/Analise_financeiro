@@ -31,25 +31,73 @@ interface MetasContextType {
 
 const MetasContext = createContext<MetasContextType | undefined>(undefined);
 
+// Função auxiliar para validar se uma meta é válida
+function isValidMeta(meta: any): boolean {
+  return (
+    meta &&
+    typeof meta === "object" &&
+    typeof meta.id === "string" &&
+    typeof meta.nome === "string" &&
+    typeof meta.valor === "number" &&
+    !isNaN(meta.valor) &&
+    meta.valor > 0 &&
+    typeof meta.valorAtual === "number" &&
+    !isNaN(meta.valorAtual) &&
+    meta.valorAtual >= 0 &&
+    typeof meta.categoria === "string" &&
+    (meta.prazo || meta.criadoEm)
+  );
+}
+
 export function MetasProvider({ children }: { children: React.ReactNode }) {
   const [metas, setMetas] = useState<Meta[]>([]);
   const { adicionarDespesa } = useDespesas();
+  const isMounted = useRef(true);
 
   // Carregar metas do AsyncStorage
   const carregarMetas = useCallback(async () => {
     try {
       const metasSalvas = await AsyncStorage.getItem("@metas");
-      if (metasSalvas) {
-        const metasParsed = JSON.parse(metasSalvas);
-        const metasConvertidas = metasParsed.map((meta: any) => ({
-          ...meta,
-          prazo: new Date(meta.prazo),
-          criadoEm: new Date(meta.criadoEm),
-        }));
-        setMetas(metasConvertidas);
+      if (metasSalvas && isMounted.current) {
+        try {
+          const metasParsed = JSON.parse(metasSalvas);
+
+          if (!Array.isArray(metasParsed)) {
+            console.warn("Dados de metas não são um array, limpando dados");
+            await AsyncStorage.removeItem("@metas");
+            return;
+          }
+
+          const metasConvertidas = metasParsed
+            .filter((meta: any) => {
+              const isValid = isValidMeta(meta);
+              if (!isValid) {
+                console.warn("Meta inválida encontrada, ignorando:", meta);
+              }
+              return isValid;
+            })
+            .map((meta: any) => ({
+              ...meta,
+              prazo: new Date(meta.prazo),
+              criadoEm: new Date(meta.criadoEm),
+            }));
+
+          if (isMounted.current) {
+            setMetas(metasConvertidas);
+          }
+        } catch (parseError) {
+          console.error("Erro ao fazer parse das metas:", parseError);
+          await AsyncStorage.removeItem("@metas");
+          if (isMounted.current) {
+            setMetas([]);
+          }
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar metas:", error);
+      if (isMounted.current) {
+        setMetas([]);
+      }
     }
   }, []);
 
@@ -58,10 +106,17 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
 
   // Carregar metas ao iniciar (apenas uma vez)
   useEffect(() => {
-    if (!hasLoaded.current) {
+    if (!hasLoaded.current && isMounted.current) {
       hasLoaded.current = true;
       carregarMetas();
     }
+  }, [carregarMetas]);
+
+  // Cleanup ao desmontar
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   // Flag para evitar salvar durante o carregamento inicial
@@ -74,9 +129,20 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    if (!isMounted.current) return;
+
     const salvarMetas = async () => {
       try {
-        await AsyncStorage.setItem("@metas", JSON.stringify(metas));
+        // Validar metas antes de salvar
+        const metasValidas = metas.filter((meta) => {
+          const isValid = isValidMeta(meta);
+          if (!isValid) {
+            console.warn("Meta inválida detectada ao salvar:", meta);
+          }
+          return isValid;
+        });
+
+        await AsyncStorage.setItem("@metas", JSON.stringify(metasValidas));
       } catch (error) {
         console.error("Erro ao salvar metas:", error);
       }
@@ -105,28 +171,35 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
   // Função auxiliar para confirmar e adicionar valor
   const confirmarEAdicionarValor = useCallback(
     (metaId: string, valor: number, meta: Meta) => {
-      // Atualizar meta
-      setMetas((prev) =>
-        prev.map((m) =>
-          m.id === metaId ? { ...m, valorAtual: m.valorAtual + valor } : m,
-        ),
-      );
+      try {
+        if (!isMounted.current) return;
 
-      // Registrar como gasto imediatamente (não usar setTimeout)
-      adicionarDespesa({
-        id: Date.now(),
-        nome: `Meta: ${meta.nome}`,
-        valor: valor,
-        data: new Date().toLocaleDateString("pt-BR"),
-        icone: "��",
-        descricao: `Valor adicionado à meta: ${meta.nome}`,
-        tipo: "variavel",
-      });
+        // Atualizar meta
+        setMetas((prev) =>
+          prev.map((m) =>
+            m.id === metaId ? { ...m, valorAtual: m.valorAtual + valor } : m,
+          ),
+        );
 
-      Alert.alert(
-        "Sucesso",
-        "Valor adicionado à meta e registrado como gasto!",
-      );
+        // Registrar como gasto imediatamente (não usar setTimeout)
+        adicionarDespesa({
+          id: Date.now(),
+          nome: `Meta: ${meta.nome}`,
+          valor: valor,
+          data: new Date().toLocaleDateString("pt-BR"),
+          icone: "🎯",
+          descricao: `Valor adicionado à meta: ${meta.nome}`,
+          tipo: "variavel",
+        });
+
+        Alert.alert(
+          "Sucesso",
+          "Valor adicionado à meta e registrado como gasto!",
+        );
+      } catch (error) {
+        console.error("Erro ao adicionar valor na meta:", error);
+        Alert.alert("Erro", "Não foi possível adicionar o valor à meta.");
+      }
     },
     [adicionarDespesa],
   );
@@ -134,34 +207,51 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
   // Adicionar valor à meta
   const adicionarValorNaMeta = useCallback(
     (metaId: string, valor: number) => {
-      // Buscar a meta atual
-      const meta = metas.find((m) => m.id === metaId);
-      if (!meta) return;
+      try {
+        if (!isMounted.current) return;
 
-      // Verificar se excede o valor da meta
-      if (meta.valorAtual + valor > meta.valor) {
-        Alert.alert(
-          "Aviso",
-          "O valor adicionado excederá a meta. Deseja continuar?",
-          [
-            { text: "Cancelar", style: "cancel" },
-            {
-              text: "Continuar",
-              onPress: () => confirmarEAdicionarValor(metaId, valor, meta),
-            },
-          ],
-        );
-        return;
+        if (!valor || isNaN(valor) || valor <= 0) {
+          Alert.alert("Erro", "Valor inválido.");
+          return;
+        }
+
+        // Buscar a meta atual
+        const meta = metas.find((m) => m.id === metaId);
+        if (!meta) {
+          Alert.alert("Erro", "Meta não encontrada.");
+          return;
+        }
+
+        // Verificar se excede o valor da meta
+        if (meta.valorAtual + valor > meta.valor) {
+          Alert.alert(
+            "Aviso",
+            "O valor adicionado excederá a meta. Deseja continuar?",
+            [
+              { text: "Cancelar", style: "cancel" },
+              {
+                text: "Continuar",
+                onPress: () => confirmarEAdicionarValor(metaId, valor, meta),
+              },
+            ],
+          );
+          return;
+        }
+
+        // Adicionar valor normalmente
+        confirmarEAdicionarValor(metaId, valor, meta);
+      } catch (error) {
+        console.error("Erro ao adicionar valor na meta:", error);
+        Alert.alert("Erro", "Ocorreu um erro ao adicionar o valor.");
       }
-
-      // Adicionar valor normalmente
-      confirmarEAdicionarValor(metaId, valor, meta);
     },
     [metas, confirmarEAdicionarValor],
   );
 
   // Excluir meta
   const excluirMeta = useCallback((metaId: string) => {
+    if (!isMounted.current) return;
+
     Alert.alert(
       "Confirmar exclusão",
       "Tem certeza que deseja excluir esta meta?",
@@ -171,8 +261,13 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
           text: "Excluir",
           style: "destructive",
           onPress: () => {
-            setMetas((prev) => prev.filter((m) => m.id !== metaId));
-            Alert.alert("Sucesso", "Meta excluída!");
+            try {
+              setMetas((prev) => prev.filter((m) => m.id !== metaId));
+              Alert.alert("Sucesso", "Meta excluída!");
+            } catch (error) {
+              console.error("Erro ao excluir meta:", error);
+              Alert.alert("Erro", "Não foi possível excluir a meta.");
+            }
           },
         },
       ],

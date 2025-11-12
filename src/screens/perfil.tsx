@@ -224,7 +224,7 @@ export function Perfil() {
               }}
               sx={{
                 ":pressed": {
-                  bg: "$orange700",
+                  bg: theme.colors.orange700,
                 },
               }}
             >
@@ -253,7 +253,7 @@ export function Perfil() {
               }}
               sx={{
                 ":pressed": {
-                  bg: "$red800",
+                  bg: theme.colors.red800,
                 },
               }}
             >
@@ -338,13 +338,12 @@ export function Perfil() {
                 setRenda(valorNumerico);
                 Alert.alert("Sucesso", "Dados atualizados com sucesso!");
               }}
-            //bg="#FF9100" errado
-              bg={theme.colors.accent} //correto
+              bg={theme.colors.accent}
               rounded="$lg"
               size="lg"
               sx={{
                 ":pressed": {
-                  bg: "$orange700",
+                  bg: theme.colors.orange700,
                 },
               }}
             >
