@@ -83,7 +83,7 @@ function MetaCard({ meta }: { meta: any }) {
               </Text>
             </VStack>
             <Pressable onPress={() => excluirMeta(meta.id)} p="$1">
-              <Icon as={X} size="md" color="$red600" />
+              <Icon as={X} size="md" color={theme.colors.danger}  />
             </Pressable>
           </HStack>
 
@@ -301,7 +301,7 @@ export function Metas() {
               h={100}
               resizeMode="contain"
             />
-            <Text fontSize="$xl" fontWeight="bold" color="$orange600" mt="$2">
+            <Text fontSize="$xl" fontWeight="bold" color={theme.colors.warning} mt="$2">
               Minhas Metas
             </Text>
           </Center>

@@ -237,7 +237,8 @@ export function Perfil() {
             <Button
               mt="$2"
               mb="$4"
-              bg="$red600"
+              //bg="$red600" errado
+              bg={theme.colors.danger} //correto
               rounded="$lg"
               onPress={async () => {
                 try {
@@ -337,7 +338,8 @@ export function Perfil() {
                 setRenda(valorNumerico);
                 Alert.alert("Sucesso", "Dados atualizados com sucesso!");
               }}
-              bg="#FF9100"
+            //bg="#FF9100" errado
+              bg={theme.colors.accent} //correto
               rounded="$lg"
               size="lg"
               sx={{

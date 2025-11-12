@@ -272,7 +272,8 @@ export function AdicionarGastoForm({
         <Button
           flex={1}
           bg="$orange500"
-          $pressed={{ bg: "$orange600" }}
+         // $pressed={{ bg: "$orange600" }} errado
+          $pressed={{ bg: theme.colors.warning }} //correto
           onPress={handleSalvar}
         >
           <Text color="$white" fontWeight="bold">
