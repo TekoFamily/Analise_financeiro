@@ -11,15 +11,14 @@
 // src/config/ → Configurações globais (tema, API, ambiente)
 
 import React, { useState, useCallback, useMemo } from "react";
+import { Center, Text, Box, VStack, HStack } from "@gluestack-ui/themed";
 import {
-  Center,
-  Text,
-  Box,
-  VStack,
-  HStack,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  ListRenderItemInfo,
   FlatList,
-} from "@gluestack-ui/themed";
-import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+} from "react-native";
 import { ResumoDoMes } from "../components/domain/ResumoDoMes";
 import { UltimosGastos } from "../components/domain/UltimosGastos";
 import { AdicionarGastoForm } from "../components/domain/AdicionarGastoForm";
@@ -30,6 +29,19 @@ import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
 import { formatCurrencyDisplay } from "../utils/formatUtils";
 import { Alert } from "react-native";
 import { theme } from "../config/theme";
+
+interface GastoFormProps {
+  valor: string;
+  categoria: string;
+  data: string;
+  descricao: string;
+  tipo: "" | "fixo" | "variavel";
+}
+
+interface Section {
+  key: string;
+  component: React.ReactElement; // Alterado para React.ReactElement
+}
 
 // Tela Home: painel principal do app, mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto
 export function Home() {
@@ -44,7 +56,7 @@ export function Home() {
   }, []);
 
   const handleSalvarGasto = useCallback(
-    (dados) => {
+    (dados: GastoFormProps) => {
       if (dados.tipo && (dados.tipo === "fixo" || dados.tipo === "variavel")) {
         criarDespesa({
           valor: dados.valor,
@@ -192,7 +204,10 @@ export function Home() {
     ],
   );
 
-  const renderItem = useCallback(({ item }) => item.component, []);
+  const renderItem = useCallback(
+    ({ item }: ListRenderItemInfo<Section>) => item.component,
+    [],
+  );
 
   // Renderização da tela
   return (
