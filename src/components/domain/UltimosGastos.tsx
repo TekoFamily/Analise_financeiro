@@ -1,7 +1,14 @@
 import React from "react";
-import { Box, Text, VStack, HStack, ScrollView, Center } from "@gluestack-ui/themed";
+import {
+  Box,
+  Text,
+  VStack,
+  HStack,
+  ScrollView,
+  Center,
+} from "@gluestack-ui/themed";
 import { Dimensions } from "react-native";
-import { Despesa } from "../context/ExpensesContext";
+import { Despesa } from "../../context/ExpensesContext";
 
 interface UltimosGastosProps {
   despesas: Despesa[];
@@ -12,20 +19,10 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
 
   return (
     <VStack w="100%" mt="$4">
-      <Text
-        px="$4"
-        mb="$2"
-        fontSize="$lg"
-        fontWeight="bold"
-        color="$black"
-      >
+      <Text px="$4" mb="$2" fontSize="$lg" fontWeight="bold" color="$black">
         Últimos gastos
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        px="$0"
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} px="$0">
         <HStack space="md">
           {despesas.map((d) => (
             <Box

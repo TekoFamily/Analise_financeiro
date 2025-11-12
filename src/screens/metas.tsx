@@ -28,11 +28,14 @@ import { useMetas } from "../context/MetasContext";
 import { useMetaCalculations } from "../hooks/useMetaCalculations";
 import { formatCurrency, formatDate } from "../utils/formatUtils";
 import { CalendarDays as CalendarIcon, X } from "lucide-react-native";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 
 // Componente para exibir uma meta individual
 function MetaCard({ meta }: { meta: any }) {
-  const { progresso, diasRestantes, prazoExpirado, status } = useMetaCalculations(meta);
+  const { progresso, diasRestantes, prazoExpirado, status } =
+    useMetaCalculations(meta);
   const { adicionarValorNaMeta, excluirMeta } = useMetas();
   const [modalVisible, setModalVisible] = useState(false);
   const [valorAdicionar, setValorAdicionar] = useState("");
@@ -43,7 +46,7 @@ function MetaCard({ meta }: { meta: any }) {
       return;
     }
 
-    const valorNum = parseFloat(valorAdicionar.replace(',', '.'));
+    const valorNum = parseFloat(valorAdicionar.replace(",", "."));
     if (isNaN(valorNum) || valorNum <= 0) {
       Alert.alert("Erro", "Digite um valor válido!");
       return;
@@ -123,8 +126,8 @@ function MetaCard({ meta }: { meta: any }) {
               progresso >= 100
                 ? "$green100"
                 : prazoExpirado
-                ? "$red100"
-                : "$orange100"
+                  ? "$red100"
+                  : "$orange100"
             }
             borderRadius="$md"
             p="$2"
@@ -136,16 +139,16 @@ function MetaCard({ meta }: { meta: any }) {
                 progresso >= 100
                   ? "$green700"
                   : prazoExpirado
-                  ? "$red700"
-                  : "$orange700"
+                    ? "$red700"
+                    : "$orange700"
               }
               textAlign="center"
             >
               {progresso >= 100
                 ? "🎉 Meta alcançada!"
                 : prazoExpirado
-                ? "⚠️ Prazo expirado"
-                : "📈 Em andamento"}
+                  ? "⚠️ Prazo expirado"
+                  : "📈 Em andamento"}
             </Text>
           </Box>
 
@@ -215,7 +218,10 @@ export function Metas() {
   const [categoria, setCategoria] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
     setShowDatePicker(Platform.OS === "ios");
     if (event.type === "dismissed") {
       setShowDatePicker(false);
@@ -293,14 +299,10 @@ export function Metas() {
             </Text>
           </Center>
 
+          {/* 📦 Lista de metas — os cards abaixo podem ser reorganizados e empilhados verticalmente */}
           <VStack space="md" p="$4" pb="$8">
             {metas.length === 0 ? (
-              <Box
-                bg="$white"
-                borderRadius="$lg"
-                p="$6"
-                alignItems="center"
-              >
+              <Box bg="$white" borderRadius="$lg" p="$6" alignItems="center">
                 <Text fontSize="$md" color="$gray600" textAlign="center">
                   Você ainda não tem metas cadastradas.
                 </Text>
@@ -317,6 +319,7 @@ export function Metas() {
               metas.map((meta) => <MetaCard key={meta.id} meta={meta} />)
             )}
 
+            {/* 📝 Formulário “Nova Meta” — pode ser reposicionado (topo/abaixo). Campos se adaptam ao teclado e à tela. */}
             <Box
               bg="$white"
               borderRadius="$lg"
@@ -366,7 +369,9 @@ export function Metas() {
                   <HStack alignItems="center" space="sm">
                     <Icon as={CalendarIcon} size="sm" color="$gray600" />
                     <Text color={prazo ? "$gray900" : "$gray500"}>
-                      {prazo ? `Prazo: ${formatDate(prazo)}` : "Selecionar prazo"}
+                      {prazo
+                        ? `Prazo: ${formatDate(prazo)}`
+                        : "Selecionar prazo"}
                     </Text>
                   </HStack>
                 </Pressable>
@@ -375,7 +380,9 @@ export function Metas() {
                   mt="$2"
                   bg="$orange600"
                   onPress={handleAdicionarMeta}
-                  isDisabled={!nome.trim() || !valor || !prazo || !categoria.trim()}
+                  isDisabled={
+                    !nome.trim() || !valor || !prazo || !categoria.trim()
+                  }
                 >
                   <Text color="$white">Criar Meta</Text>
                 </Button>

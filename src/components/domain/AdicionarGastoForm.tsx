@@ -10,9 +10,14 @@ import {
   Box,
   Pressable,
 } from "@gluestack-ui/themed";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Platform } from "react-native";
-import { formatCurrencyInput, parseCurrencyInput } from "../utils/formatUtils";
+import {
+  formatCurrencyInput,
+  parseCurrencyInput,
+} from "../../utils/formatUtils";
 
 // Interface que define as propriedades que o componente deve receber
 // categorias: array de strings com as categorias disponíveis
@@ -24,7 +29,7 @@ interface AdicionarGastoFormProps {
     categoria: string;
     data: string;
     descricao: string;
-    tipo: 'fixo' | 'variavel' | '';
+    tipo: "fixo" | "variavel" | "";
   }) => void;
 }
 
@@ -44,7 +49,7 @@ export function AdicionarGastoForm({
   const [adicionandoCategoria, setAdicionandoCategoria] = useState(false);
   const [novaCategoria, setNovaCategoria] = useState("");
   // Estado para tipo de gasto
-  const [tipo, setTipo] = useState<'fixo' | 'variavel' | ''>('');
+  const [tipo, setTipo] = useState<"fixo" | "variavel" | "">("");
 
   // Date picker state
   const [actualDate, setActualDate] = useState(new Date());
@@ -59,36 +64,48 @@ export function AdicionarGastoForm({
 
   // Handle date selection
   const onDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until dismissed
-    if (event.type === 'dismissed') {
-        setShowDatePicker(false);
-        return;
+    setShowDatePicker(Platform.OS === "ios"); // Keep open on iOS until dismissed
+    if (event.type === "dismissed") {
+      setShowDatePicker(false);
+      return;
     }
     if (selectedDate) {
       const currentDate = selectedDate || actualDate;
       setActualDate(currentDate);
-      const day = currentDate.getDate().toString().padStart(2, '0');
-      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = currentDate.getDate().toString().padStart(2, "0");
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
       const year = currentDate.getFullYear();
       setDataDisplay(`${day}/${month}/${year}`);
     }
     // For Android, picker is hidden after selection automatically
-    if (Platform.OS !== 'ios') {
-        setShowDatePicker(false);
+    if (Platform.OS !== "ios") {
+      setShowDatePicker(false);
     }
   };
 
   const showMode = () => {
     setShowDatePicker(true);
   };
-  
+
   const handleSalvar = () => {
     const valorNumerico = parseCurrencyInput(valorDisplay);
-    if (!valorNumerico || !categoria || dataDisplay === "DD/MM/AAAA" || !descricao || !tipo) {
+    if (
+      !valorNumerico ||
+      !categoria ||
+      dataDisplay === "DD/MM/AAAA" ||
+      !descricao ||
+      !tipo
+    ) {
       alert("Preencha todos os campos antes de salvar.");
       return;
     }
-    onSalvar({ valor: valorNumerico, categoria, data: dataDisplay, descricao, tipo });
+    onSalvar({
+      valor: valorNumerico,
+      categoria,
+      data: dataDisplay,
+      descricao,
+      tipo,
+    });
     setValor("");
     setValorDisplay("");
     setCategoria("");
@@ -110,7 +127,10 @@ export function AdicionarGastoForm({
 
   // Função para adicionar nova categoria
   const handleAdicionarCategoria = () => {
-    if (novaCategoria.trim() && !categoriasCustom.includes(novaCategoria.trim())) {
+    if (
+      novaCategoria.trim() &&
+      !categoriasCustom.includes(novaCategoria.trim())
+    ) {
       setCategoriasCustom([...categoriasCustom, novaCategoria.trim()]);
       setCategoria(novaCategoria.trim().toLowerCase());
       setNovaCategoria("");
@@ -119,6 +139,8 @@ export function AdicionarGastoForm({
   };
 
   // Renderização do formulário
+  // 🔽 Este bloco (formulário) pode ser movido dentro do layout; campos se adaptam ao teclado e ao tamanho da tela
+
   return (
     <VStack space="sm">
       {/* Campo para inserir o valor do gasto */}
@@ -150,17 +172,17 @@ export function AdicionarGastoForm({
         >
           <Picker.Item label="Selecione a categoria" value="" />
           {[...categorias, ...categoriasCustom].map((cat) => (
-            <Picker.Item
-              key={cat}
-              label={cat}
-              value={cat.toLowerCase()}
-            />
+            <Picker.Item key={cat} label={cat} value={cat.toLowerCase()} />
           ))}
         </Picker>
       </Box>
       {/* Botão para adicionar nova categoria */}
       {!adicionandoCategoria ? (
-        <Button mt="$2" bg="$orange500" onPress={() => setAdicionandoCategoria(true)}>
+        <Button
+          mt="$2"
+          bg="$orange500"
+          onPress={() => setAdicionandoCategoria(true)}
+        >
           <Text color="$white">Adicionar nova categoria</Text>
         </Button>
       ) : (
@@ -175,7 +197,14 @@ export function AdicionarGastoForm({
           <Button flex={1} bg="$green500" onPress={handleAdicionarCategoria}>
             <Text color="$white">Salvar</Text>
           </Button>
-          <Button flex={1} bg="$gray400" onPress={() => { setAdicionandoCategoria(false); setNovaCategoria(""); }}>
+          <Button
+            flex={1}
+            bg="$gray400"
+            onPress={() => {
+              setAdicionandoCategoria(false);
+              setNovaCategoria("");
+            }}
+          >
             <Text color="$white">Cancelar</Text>
           </Button>
         </HStack>
@@ -187,17 +216,19 @@ export function AdicionarGastoForm({
       <HStack space="md" mb="$2">
         <Button
           flex={1}
-          bg={tipo === 'fixo' ? "$orange500" : "$gray200"}
-          onPress={() => setTipo('fixo')}
+          bg={tipo === "fixo" ? "$orange500" : "$gray200"}
+          onPress={() => setTipo("fixo")}
         >
-          <Text color={tipo === 'fixo' ? "$white" : "$gray900"}>Fixo</Text>
+          <Text color={tipo === "fixo" ? "$white" : "$gray900"}>Fixo</Text>
         </Button>
         <Button
           flex={1}
-          bg={tipo === 'variavel' ? "$orange500" : "$gray200"}
-          onPress={() => setTipo('variavel')}
+          bg={tipo === "variavel" ? "$orange500" : "$gray200"}
+          onPress={() => setTipo("variavel")}
         >
-          <Text color={tipo === 'variavel' ? "$white" : "$gray900"}>Variável</Text>
+          <Text color={tipo === "variavel" ? "$white" : "$gray900"}>
+            Variável
+          </Text>
         </Button>
       </HStack>
       {/* Campo para inserir a data do gasto */}
@@ -213,7 +244,7 @@ export function AdicionarGastoForm({
         <DateTimePicker
           testID="dateTimePicker"
           value={actualDate}
-          mode={'date'}
+          mode={"date"}
           display="default"
           onChange={onDateChange}
         />

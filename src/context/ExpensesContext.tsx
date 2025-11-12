@@ -1,7 +1,21 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from "react";
+// src/context/ExpensesContext.tsx
+// 📦 Pasta: src/context
+// Responsável por: Contexto global de despesas (criação, listagem, persistência e limpeza)
+// Observações: Usa AsyncStorage para persistir dados; expõe hook useDespesas.
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Interface que define o formato de uma despesa
+
 export interface Despesa {
   id: number; // Identificador único da despesa
   nome: string; // Nome da despesa
@@ -9,7 +23,7 @@ export interface Despesa {
   data: string; // Data da despesa
   icone: string; // Ícone associado à despesa
   descricao: string; // Descrição detalhada da despesa
-  tipo: 'fixo' | 'variavel'; // Tipo da despesa
+  tipo: "fixo" | "variavel"; // Tipo da despesa
 }
 
 // Interface que define o formato do contexto das despesas
@@ -21,7 +35,7 @@ interface DespesasContextType {
     categoria: string;
     data: string;
     descricao: string;
-    tipo: 'fixo' | 'variavel';
+    tipo: "fixo" | "variavel";
   }) => void; // Função para criar despesa a partir dos dados do formulário
   renda: number; // Valor da renda total
   setRenda: (valor: number) => void; // Função para atualizar a renda
@@ -30,7 +44,9 @@ interface DespesasContextType {
 }
 
 // Cria o contexto das despesas, inicialmente indefinido
-const DespesasContext = createContext<DespesasContextType | undefined>(undefined);
+const DespesasContext = createContext<DespesasContextType | undefined>(
+  undefined,
+);
 
 // Componente provedor do contexto das despesas
 export function DespesasProvider({ children }: { children: React.ReactNode }) {
@@ -121,24 +137,28 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Função para criar despesa a partir dos dados do formulário - memoizada
-  const criarDespesa = useCallback((dados: {
-    valor: string;
-    categoria: string;
-    data: string;
-    descricao: string;
-    tipo: 'fixo' | 'variavel';
-  }) => {
-    const novaDespesa: Despesa = {
-      id: Date.now(),
-      nome: dados.categoria.charAt(0).toUpperCase() + dados.categoria.slice(1),
-      valor: parseFloat(dados.valor.replace(",", ".")),
-      data: dados.data,
-      icone: getIconForCategory(dados.categoria),
-      descricao: dados.descricao,
-      tipo: dados.tipo,
-    };
-    adicionarDespesa(novaDespesa);
-  }, [adicionarDespesa, getIconForCategory]);
+  const criarDespesa = useCallback(
+    (dados: {
+      valor: string;
+      categoria: string;
+      data: string;
+      descricao: string;
+      tipo: "fixo" | "variavel";
+    }) => {
+      const novaDespesa: Despesa = {
+        id: Date.now(),
+        nome:
+          dados.categoria.charAt(0).toUpperCase() + dados.categoria.slice(1),
+        valor: parseFloat(dados.valor.replace(",", ".")),
+        data: dados.data,
+        icone: getIconForCategory(dados.categoria),
+        descricao: dados.descricao,
+        tipo: dados.tipo,
+      };
+      adicionarDespesa(novaDespesa);
+    },
+    [adicionarDespesa, getIconForCategory],
+  );
 
   // Função para limpar todos os dados de despesas e renda - memoizada
   const limparDados = useCallback(async () => {
@@ -153,21 +173,27 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
     setRenda(valor);
   }, []);
 
-
-
-
-
-  
   // Memoizar o valor do contexto para evitar re-renders desnecessários
-  const contextValue = useMemo(() => ({
-    despesas,
-    adicionarDespesa,
-    criarDespesa,
-    renda,
-    setRenda: setRendaMemo,
-    limparDados,
-    categorias,
-  }), [despesas, adicionarDespesa, criarDespesa, renda, setRendaMemo, limparDados, categorias]);
+  const contextValue = useMemo(
+    () => ({
+      despesas,
+      adicionarDespesa,
+      criarDespesa,
+      renda,
+      setRenda: setRendaMemo,
+      limparDados,
+      categorias,
+    }),
+    [
+      despesas,
+      adicionarDespesa,
+      criarDespesa,
+      renda,
+      setRendaMemo,
+      limparDados,
+      categorias,
+    ],
+  );
 
   // Retorna o provedor do contexto, disponibilizando os valores e funções para os componentes filhos
   return (
@@ -181,6 +207,7 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
 export function useDespesas() {
   const context = useContext(DespesasContext);
   // Garante que o hook seja usado dentro do provedor
-  if (!context) throw new Error("useDespesas deve ser usado dentro do DespesasProvider");
+  if (!context)
+    throw new Error("useDespesas deve ser usado dentro do DespesasProvider");
   return context;
 }

@@ -9,18 +9,19 @@ import {
   Button,
 } from "@gluestack-ui/themed";
 import { useDespesas } from "../context/ExpensesContext"; // Importando o contexto de despesas
-import { DespesasList } from "../components/DespesasList";
-import { FiltroDespesasButtons } from "../components/FiltroDespesasButtons";
+import { DespesasList } from "../components/domain/DespesasList";
+import { FiltroDespesasButtons } from "../components/domain/FiltroDespesasButtons";
 
 // Componente principal da tela de gastos
 export function History() {
   // Hook do contexto para acessar as despesas
   const { despesas } = useDespesas();
   // Estado para filtro
-  const [filtro, setFiltro] = useState<'todos' | 'fixo' | 'variavel'>('todos');
+  const [filtro, setFiltro] = useState<"todos" | "fixo" | "variavel">("todos");
 
   // Função para filtrar despesas
-  const despesasFiltradas = filtro === 'todos' ? despesas : despesas.filter(d => d.tipo === filtro);
+  const despesasFiltradas =
+    filtro === "todos" ? despesas : despesas.filter((d) => d.tipo === filtro);
 
   // Renderização da tela
   return (

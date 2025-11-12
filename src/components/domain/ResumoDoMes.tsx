@@ -1,10 +1,21 @@
 import React, { useState, useMemo } from "react";
-import { Center, Text, Box, HStack, VStack, ScrollView, Pressable, Icon } from "@gluestack-ui/themed";
+import {
+  Center,
+  Text,
+  Box,
+  HStack,
+  VStack,
+  ScrollView,
+  Pressable,
+  Icon,
+} from "@gluestack-ui/themed";
 import { Platform } from "react-native";
 import { CalendarDays as CalendarDaysIcon } from "lucide-react-native";
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-import { useDespesas } from "../context/ExpensesContext";
-import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { useDespesas } from "../../context/ExpensesContext";
+import { useFinancialCalculations } from "../../hooks/useFinancialCalculations";
 
 interface CategoriaData {
   name: string;
@@ -31,21 +42,28 @@ const calculateBarHeight = (
   maxExpense: number,
   MAX_BAR_HEIGHT: number,
   MIN_BAR_HEIGHT: number,
-  EXP_FACTOR: number
+  EXP_FACTOR: number,
 ) => {
   if (value > 0 && renda > 0 && percentage >= 0) {
     const powered = Math.pow(percentage / 100, EXP_FACTOR);
-    return Math.max(MIN_BAR_HEIGHT, Math.min(MAX_BAR_HEIGHT, MAX_BAR_HEIGHT * powered));
+    return Math.max(
+      MIN_BAR_HEIGHT,
+      Math.min(MAX_BAR_HEIGHT, MAX_BAR_HEIGHT * powered),
+    );
   } else if (value > 0) {
     const powered = Math.pow(Math.max(0, value / maxExpense), EXP_FACTOR);
-    return Math.max(MIN_BAR_HEIGHT, Math.min(MAX_BAR_HEIGHT, MAX_BAR_HEIGHT * powered));
+    return Math.max(
+      MIN_BAR_HEIGHT,
+      Math.min(MAX_BAR_HEIGHT, MAX_BAR_HEIGHT * powered),
+    );
   }
   return 0;
 };
 
 export function ResumoDoMes() {
   const { renda } = useDespesas();
-  const { getDespesasPorPeriodo, getTotalGastosPorPeriodo } = useFinancialCalculations();
+  const { getDespesasPorPeriodo, getTotalGastosPorPeriodo } =
+    useFinancialCalculations();
   const [currentFilterDate, setCurrentFilterDate] = useState(new Date());
   const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
@@ -53,24 +71,35 @@ export function ResumoDoMes() {
   const MIN_BAR_HEIGHT = 8;
   const EXP_FACTOR = 1.2;
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShowMonthYearPicker(Platform.OS === 'ios');
-    if (event.type === 'dismissed') {
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    setShowMonthYearPicker(Platform.OS === "ios");
+    if (event.type === "dismissed") {
       setShowMonthYearPicker(false);
       return;
     }
     if (selectedDate) setCurrentFilterDate(selectedDate);
-    if (Platform.OS !== 'ios') setShowMonthYearPicker(false);
+    if (Platform.OS !== "ios") setShowMonthYearPicker(false);
   };
 
-  const formattedMonthYear = useMemo(() => (
-    currentFilterDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })
-  ), [currentFilterDate]);
+  const formattedMonthYear = useMemo(
+    () =>
+      currentFilterDate.toLocaleString("pt-BR", {
+        month: "long",
+        year: "numeric",
+      }),
+    [currentFilterDate],
+  );
 
   // Obtém despesas e totais do período selecionado
   const mes = useMemo(() => currentFilterDate.getMonth(), [currentFilterDate]);
-  const ano = useMemo(() => currentFilterDate.getFullYear(), [currentFilterDate]);
-  
+  const ano = useMemo(
+    () => currentFilterDate.getFullYear(),
+    [currentFilterDate],
+  );
+
   const filteredDespesas = useMemo(() => {
     return getDespesasPorPeriodo(mes, ano);
   }, [getDespesasPorPeriodo, mes, ano]);
@@ -82,27 +111,29 @@ export function ResumoDoMes() {
   // Soma por categoria
   const totalPorCategoria = useMemo(() => {
     const totals: { [key: string]: number } = {};
-    filteredDespesas.forEach(d => {
+    filteredDespesas.forEach((d: any) => {
       totals[d.nome] = (totals[d.nome] || 0) + d.valor;
     });
     return totals;
   }, [filteredDespesas]);
 
-  const categoriasData: CategoriaData[] = useMemo(() => (
-    Object.keys(totalPorCategoria).map(cat => {
-      const value = totalPorCategoria[cat];
-      const percentage = renda > 0 ? Math.round((value / renda) * 100) : 0;
-      return {
-        name: cat,
-        percentage,
-        value,
-        color: getDynamicColor(percentage),
-      };
-    })
-  ), [totalPorCategoria, renda]);
+  const categoriasData: CategoriaData[] = useMemo(
+    () =>
+      Object.keys(totalPorCategoria).map((cat) => {
+        const value = totalPorCategoria[cat];
+        const percentage = renda > 0 ? Math.round((value / renda) * 100) : 0;
+        return {
+          name: cat,
+          percentage,
+          value,
+          color: getDynamicColor(percentage),
+        };
+      }),
+    [totalPorCategoria, renda],
+  );
 
   const maxExpense = useMemo(() => {
-    const vals = categoriasData.map(c => c.value).filter(v => v > 0);
+    const vals = categoriasData.map((c) => c.value).filter((v) => v > 0);
     return vals.length > 0 ? Math.max(...vals) : 1;
   }, [categoriasData]);
 
@@ -131,7 +162,9 @@ export function ResumoDoMes() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <HStack>
             {categoriasData.length === 0 || totalGastos === 0 ? (
-              <Text color="$gray600">Nenhum gasto registrado para {formattedMonthYear}.</Text>
+              <Text color="$gray600">
+                Nenhum gasto registrado para {formattedMonthYear}.
+              </Text>
             ) : (
               categoriasData.map((item, idx) => (
                 <VStack
@@ -143,9 +176,20 @@ export function ResumoDoMes() {
                   height={MAX_BAR_HEIGHT + 70}
                   ml={idx > 0 ? 8 : 0}
                 >
-                  <Text color="$black" fontSize="$xs" numberOfLines={1} textAlign="center">{item.name}</Text>
-                  <Text color="$gray700" fontSize="$xs" textAlign="center">R${item.value.toFixed(2)}</Text>
-                  <Text color="$gray700" fontSize="$xs" textAlign="center">({item.percentage}%)</Text>
+                  <Text
+                    color="$black"
+                    fontSize="$xs"
+                    numberOfLines={1}
+                    textAlign="center"
+                  >
+                    {item.name}
+                  </Text>
+                  <Text color="$gray700" fontSize="$xs" textAlign="center">
+                    R${item.value.toFixed(2)}
+                  </Text>
+                  <Text color="$gray700" fontSize="$xs" textAlign="center">
+                    ({item.percentage}%)
+                  </Text>
                   <Box
                     height={calculateBarHeight(
                       item.value,
@@ -154,7 +198,7 @@ export function ResumoDoMes() {
                       maxExpense,
                       MAX_BAR_HEIGHT,
                       MIN_BAR_HEIGHT,
-                      EXP_FACTOR
+                      EXP_FACTOR,
                     )}
                     width={40}
                     bg={item.color}

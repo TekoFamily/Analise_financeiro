@@ -1,23 +1,26 @@
-import React, {  Suspense } from 'react';
+import React, { Suspense } from "react";
 import {
   BottomTabNavigationProp,
   createBottomTabNavigator,
-} from '@react-navigation/bottom-tabs';
-import { ActivityIndicator, View, Platform } from 'react-native';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
-import { gluestackUIConfig } from '../../config/gluestack-ui.config';
+} from "@react-navigation/bottom-tabs";
+import { ActivityIndicator, View, Platform } from "react-native";
+import {
+  useSafeAreaInsets,
+  SafeAreaView,
+} from "react-native-safe-area-context";
+import { gluestackUIConfig } from "../../config/gluestack-ui.config";
 
 // 🧭 Ícones
-import MoneySvg from '@assets/bakingmoney.svg';
-import ProfileSvg from '@assets/profile.svg';
-import GoalsSvg from '@assets/goals-svgrepo-com.svg';
-import AnalysisIcon from '@assets/dash.svg';
+import MoneySvg from "@assets/bakingmoney.svg";
+import ProfileSvg from "@assets/profile.svg";
+import GoalsSvg from "@assets/goals-svgrepo-com.svg";
+import AnalysisIcon from "@assets/dash.svg";
 
-import { Home } from '@screens/Home'
-import { History } from '@screens/gastos'
+import { Home } from "@screens/Home";
+import { History } from "@screens/gastos";
 // ✅ CORREÇÃO: Importar Metas ao invés de Profile
-import { Metas } from '@screens/metas'
-import { Perfil } from '@screens/perfil'
+import { Metas } from "@screens/metas";
+import { Perfil } from "@screens/perfil";
 
 // ⏳ Tela de carregamento
 function LoadingScreen() {
@@ -25,18 +28,15 @@ function LoadingScreen() {
     <View
       style={{
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f5f5f5',
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#f5f5f5",
       }}
     >
       <ActivityIndicator size="large" color="#FF9100" />
     </View>
   );
 }
-
-
-
 
 // 🧱 Tipagem das rotas
 type AppRoutes = {
@@ -53,7 +53,7 @@ const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>();
 // 🧭 Navegador principal
 export function AppRoutes() {
   const { tokens } = gluestackUIConfig;
-  const iconSize = tokens.space['7'];
+  const iconSize = tokens.space["7"];
   const insets = useSafeAreaInsets();
 
   return (
@@ -73,13 +73,13 @@ export function AppRoutes() {
             backgroundColor: tokens.colors.white,
             borderTopWidth: 0,
             borderTopColor: tokens.colors.gray300,
-            height: Platform.OS === 'ios' ? 80 + insets.bottom : 70,
+            height: Platform.OS === "ios" ? 80 + insets.bottom : 70,
             paddingBottom: insets.bottom,
             paddingTop: 10,
             paddingLeft: insets.left,
             paddingRight: insets.right,
             elevation: 8,
-            shadowColor: '#000',
+            shadowColor: "#000",
             shadowOffset: {
               width: 0,
               height: -2,
