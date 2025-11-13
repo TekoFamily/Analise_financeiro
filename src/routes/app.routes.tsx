@@ -1,99 +1,139 @@
+import React, { Suspense } from "react";
 import {
   BottomTabNavigationProp,
   createBottomTabNavigator,
-} from '@react-navigation/bottom-tabs'
-import { gluestackUIConfig } from '../../config/gluestack-ui.config'
+} from "@react-navigation/bottom-tabs";
+import { ActivityIndicator, View, Platform } from "react-native";
+import {
+  useSafeAreaInsets,
+  SafeAreaView,
+} from "react-native-safe-area-context";
+import { gluestackUIConfig } from "../../config/gluestack-ui.config";
+import { theme } from "../config/theme";
 
-/* import HomeSvg from '@assets/home.svg' */
+// 🧭 Ícones
+import MoneySvg from "@assets/bakingmoney.svg";
+import ProfileSvg from "@assets/profile.svg";
+import GoalsSvg from "@assets/goals-svgrepo-com.svg";
+import AnalysisIcon from "@assets/dash.svg";
 
-import MoneySvg from '@assets/bakingmoney.svg'
+import { Home } from "@screens/Home";
+import { History } from "@screens/gastos";
+// ✅ CORREÇÃO: Importar Metas ao invés de Profile
+import { Metas } from "@screens/metas";
+import { Perfil } from "@screens/perfil";
 
-
-import ProfileSvg from '@assets/profile.svg'
-/* import LaptopReportIcon from '@assets/laptop-report-icon.svg' */
-
-import GoalsSvg from '@assets/goals-svgrepo-com.svg' // novo import
-
-import AnalysisIcon from '@assets/dash.svg'
-
-
-import { Home } from '@screens/Home'
-import { History } from '@screens/gastos'
-import { Profile } from '@screens/metas'
-import { Perfil } from '@screens/perfil'
-import { Platform } from 'react-native'
-
-type AppRoutes = {
-  home: undefined
-  exercise: undefined
-  profile: undefined
-  history: undefined
-}
-
-export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>
-
-const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>()
-
-export function AppRoutes() {
-  const { tokens } = gluestackUIConfig
-  const iconSize = tokens.space['6']
-
+// ⏳ Tela de carregamento
+function LoadingScreen() {
   return (
-    <Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarActiveTintColor: tokens.colors.green500,
-        tabBarInactiveTintColor: tokens.colors.gray200,
-        tabBarStyle: {
-          backgroundColor: tokens.colors.white,
-          borderTopWidth: 0,
-          
-          height: Platform.OS === 'android' ? 'auto' : 96,
-          paddingBottom: tokens.space['14'],
-          paddingTop: tokens.space['6'],
-        },
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: theme.colors.background,
       }}
     >
-      <Screen
-        name="home"
-        component={Home}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <AnalysisIcon fill={color} width={50} height={40} />
-          ),
+      <ActivityIndicator size="large" color={theme.colors.accent} />
+    </View>
+  );
+}
+
+// 🧱 Tipagem das rotas
+type AppRoutes = {
+  home: undefined;
+  exercise: undefined;
+  profile: undefined;
+  history: undefined;
+};
+
+export type AppNavigatorRoutesProps = BottomTabNavigationProp<AppRoutes>;
+
+const { Navigator, Screen } = createBottomTabNavigator<AppRoutes>();
+
+// 🧭 Navegador principal
+export function AppRoutes() {
+  const { tokens } = gluestackUIConfig;
+  const iconSize = tokens.space["7"];
+  const insets = useSafeAreaInsets();
+
+  return (
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: tokens.colors.white,
+      }}
+    >
+      <Navigator
+        screenOptions={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarActiveTintColor: tokens.colors.green500,
+          tabBarInactiveTintColor: tokens.colors.gray200,
+          tabBarStyle: {
+            backgroundColor: tokens.colors.white,
+            borderTopWidth: 0,
+            borderTopColor: tokens.colors.gray300,
+            height: Platform.OS === "ios" ? 80 + insets.bottom : 70,
+            paddingBottom: insets.bottom,
+            paddingTop: 10,
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+            elevation: 8,
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: -2,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 3.84,
+          },
         }}
-      />
-      <Screen
-        name="history"
-        component={History}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <MoneySvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-      />
-      <Screen
-        name="profile"
-        component={Profile}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <GoalsSvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-      />
-      <Screen
-        name="exercise"
-        component={Perfil}
-         options={{
-          tabBarIcon: ({ color }) => (
-            <ProfileSvg fill={color} width={iconSize} height={iconSize} />
-          ),
-        }}
-        
-   
-       
-      />
-    </Navigator>
-  )
+      >
+        {/* 🏠 Home */}
+        <Screen
+          name="home"
+          component={Home}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <AnalysisIcon fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 💰 Histórico */}
+        <Screen
+          name="history"
+          component={History}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <MoneySvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 🎯 Metas */}
+        <Screen
+          name="profile"
+          component={Metas}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <GoalsSvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+
+        {/* 👤 Perfil */}
+        <Screen
+          name="exercise"
+          component={Perfil}
+          options={{
+            tabBarIcon: ({ color }) => (
+              <ProfileSvg fill={color} width={iconSize} height={iconSize} />
+            ),
+          }}
+        />
+      </Navigator>
+    </SafeAreaView>
+  );
 }

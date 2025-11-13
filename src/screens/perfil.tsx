@@ -13,52 +13,72 @@ import {
   Icon,
   HStack,
 } from "@gluestack-ui/themed";
-import { User as UserIcon, Camera as CameraIcon, CalendarDays as CalendarDaysIcon } from "lucide-react-native";
+import {
+  User as UserIcon,
+  Camera as CameraIcon,
+  CalendarDays as CalendarDaysIcon,
+} from "lucide-react-native";
 import { useDespesas } from "../context/ExpensesContext";
 import { useAuth } from "../context/AuthContext";
-import { Alert, Platform, KeyboardAvoidingView, StyleSheet } from "react-native";
-import { Input } from "@components/input";
-import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
-
-// Função para formatar valor como moeda brasileira
-function formatCurrency(value: string | number) {
-  const num = typeof value === "string" ? Number(value.replace(/\D/g, "")) / 100 : value;
-  return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-// Função para extrair apenas números do valor formatado
-function parseCurrency(formatted: string) {
-  const numeric = formatted.replace(/\D/g, "");
-  return numeric ? Number(numeric) / 100 : 0;
-}
+import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
+import {
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+  StyleSheet,
+} from "react-native";
+import { Input } from "@components/base/Input";
+import * as ImagePicker from "expo-image-picker";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { formatCurrency, parseCurrency } from "../utils/formatUtils";
+import { theme } from "../config/theme";
 
 // Componente principal da tela de perfil
 export function Perfil() {
   const { user, signOut } = useAuth();
 
+  // Proteção: se user não existir, retorna null (componente não renderiza)
+  if (!user) {
+    return null;
+  }
+
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
-  const { despesas, renda, setRenda } = useDespesas();
+  const { despesas, renda, setRenda, limparDados } = useDespesas();
   const [income, setIncome] = useState(formatCurrency(renda));
   const [profileImageUri, setProfileImageUri] = useState<string | null>(null);
 
   // State for date filtering
-  const [filterType, setFilterType] = useState<'month' | 'year'>('month');
+  const [filterType, setFilterType] = useState<"month" | "year">("month");
   const [currentFilterDate, setCurrentFilterDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // Atualiza os campos quando user mudar (apenas se realmente mudou)
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user?.name, user?.email, user?.phone]);
+
   // Sempre que a renda do contexto mudar, atualize o campo formatado
   useEffect(() => {
-    setIncome(formatCurrency(renda));
+    const formatted = formatCurrency(renda);
+    setIncome(formatted);
   }, [renda]);
 
   const handleSelectImage = async () => {
     // Request permission to access media library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão Necessária', 'Desculpe, precisamos da permissão da galeria para fazer isso funcionar!');
+    if (status !== "granted") {
+      Alert.alert(
+        "Permissão Necessária",
+        "Desculpe, precisamos da permissão da galeria para fazer isso funcionar!",
+      );
       return;
     }
 
@@ -75,46 +95,47 @@ export function Perfil() {
     }
   };
 
-  const handleDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until dismissed
-    if (event.type === 'dismissed') {
-        setShowDatePicker(false);
-        return;
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    setShowDatePicker(Platform.OS === "ios"); // Keep open on iOS until dismissed
+    if (event.type === "dismissed") {
+      setShowDatePicker(false);
+      return;
     }
     if (selectedDate) {
       setCurrentFilterDate(selectedDate);
     }
-    if (Platform.OS !== 'ios') {
-        setShowDatePicker(false);
+    if (Platform.OS !== "ios") {
+      setShowDatePicker(false);
     }
   };
 
   const formattedPeriod = useMemo(() => {
-    if (filterType === 'month') {
-      return currentFilterDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+    if (filterType === "month") {
+      return currentFilterDate.toLocaleString("pt-BR", {
+        month: "long",
+        year: "numeric",
+      });
     }
     return currentFilterDate.getFullYear().toString();
   }, [currentFilterDate, filterType]);
+
+  // Usar hook para cálculos de despesas
+  const { getDespesasPorPeriodo, getDespesasPorAno } =
+    useFinancialCalculations();
 
   const filteredDespesas = useMemo(() => {
     const selectedMonth = currentFilterDate.getMonth();
     const selectedYear = currentFilterDate.getFullYear();
 
-    return despesas.filter(d => {
-      if (!d.data || typeof d.data !== 'string') return false;
-      const parts = d.data.split('/');
-      if (parts.length !== 3) return false;
-      // const day = parseInt(parts[0], 10); // Day is not needed for month/year filter
-      const month = parseInt(parts[1], 10) - 1; // Convert to 0-indexed month
-      const year = parseInt(parts[2], 10);
-
-      if (filterType === 'month') {
-        return month === selectedMonth && year === selectedYear;
-      } else { // filterType === 'year'
-        return year === selectedYear;
-      }
-    });
-  }, [despesas, currentFilterDate, filterType]);
+    if (filterType === "month") {
+      return getDespesasPorPeriodo(selectedMonth, selectedYear);
+    } else {
+      return getDespesasPorAno(selectedYear);
+    }
+  }, [currentFilterDate, filterType, getDespesasPorPeriodo, getDespesasPorAno]);
 
   const totalGastosFiltrados = useMemo(() => {
     return filteredDespesas.reduce((sum, d) => sum + d.valor, 0);
@@ -124,7 +145,7 @@ export function Perfil() {
     <KeyboardAvoidingView
       style={styles.keyboardAvoidingView}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Ajustado para 0
     >
       <ScrollView
         flex={1}
@@ -134,7 +155,7 @@ export function Perfil() {
         keyboardShouldPersistTaps="handled"
       >
         <VStack space="lg" p="$6" pt="$12">
-          
+          {/* 🔽 Avatar e cabeçalho — pode mover para topo fixo ou esconder em telas menores */}
           <Center>
             <Pressable
               onPress={handleSelectImage}
@@ -172,18 +193,68 @@ export function Perfil() {
             <Heading size="xl" color="$textDark800" mb="$1">
               Meu Perfil
             </Heading>
-            <Text color="$textLight600" fontSize="$md" mb="$6">Edite seus dados e gerencie sua renda.</Text>
+            <Text color="$textLight600" fontSize="$md" mb="$6">
+              Edite seus dados e gerencie sua renda.
+            </Text>
+            {/* Botão para limpar dados */}
+            <Button
+              mt="$2"
+              mb="$2"
+              bg={theme.colors.accent}
+              rounded="$lg"
+              onPress={() => {
+                Alert.alert(
+                  "Limpar Dados",
+                  "Tem certeza que deseja limpar todos os dados de gastos? Esta ação não pode ser desfeita.",
+                  [
+                    { text: "Cancelar", style: "cancel" },
+                    {
+                      text: "Sim, limpar",
+                      onPress: async () => {
+                        await limparDados();
+                        Alert.alert(
+                          "Sucesso",
+                          "Todos os dados de gastos foram limpos.",
+                        );
+                      },
+                      style: "destructive",
+                    },
+                  ],
+                );
+              }}
+              sx={{
+                ":pressed": {
+                  bg: theme.colors.orange700,
+                },
+              }}
+            >
+              <Text color="$white" fontWeight="$bold">
+                Limpar Dados
+              </Text>
+            </Button>
+
             {/* Botão de sair */}
             <Button
               mt="$2"
               mb="$4"
-              bg="$red600"
+              //bg="$red600" errado
+              bg={theme.colors.danger} //correto
               rounded="$lg"
-              onPress={signOut}
+              onPress={async () => {
+                try {
+                  await signOut();
+                } catch (error) {
+                  console.error("Erro ao fazer logout:", error);
+                  Alert.alert(
+                    "Erro",
+                    "Ocorreu um erro ao sair. Tente novamente.",
+                  );
+                }
+              }}
               sx={{
                 ":pressed": {
-                  bg: "$red800"
-                }
+                  bg: theme.colors.red800,
+                },
               }}
             >
               <Text color="$white" fontWeight="$bold">
@@ -192,7 +263,8 @@ export function Perfil() {
             </Button>
           </Center>
 
-          {/* Card de informações do usuário */}
+          {/* 🧾 Card de informações do usuário — redimensiona conforme conteúdo; pode ser movido acima/abaixo do histórico */}
+
           <Box
             bg="$white"
             rounded="$xl"
@@ -200,7 +272,9 @@ export function Perfil() {
             sx={{ _dark: { bg: "$coolGray800" } }}
           >
             {/* Campo Nome */}
-            <Text color="$textLight800" fontWeight="$bold" mb="$1">Nome Completo*</Text>
+            <Text color="$textLight800" fontWeight="$bold" mb="$1">
+              Nome Completo*
+            </Text>
             <Input
               value={name}
               onChangeText={setName}
@@ -211,7 +285,9 @@ export function Perfil() {
             <Box h="$4" />
 
             {/* Campo E-mail */}
-            <Text color="$textLight800" fontWeight="$bold" mb="$1">E-mail*</Text>
+            <Text color="$textLight800" fontWeight="$bold" mb="$1">
+              E-mail*
+            </Text>
             <Input
               value={email}
               onChangeText={setEmail}
@@ -219,11 +295,13 @@ export function Perfil() {
               keyboardType="email-address"
               rounded="$lg"
             />
-            
+
             <Box h="$4" />
 
             {/* Campo Telefone */}
-            <Text color="$textLight800" fontWeight="$bold" mb="$1">Telefone</Text>
+            <Text color="$textLight800" fontWeight="$bold" mb="$1">
+              Telefone
+            </Text>
             <Input
               value={phone}
               onChangeText={setPhone}
@@ -235,7 +313,9 @@ export function Perfil() {
             <Box h="$4" />
 
             {/* Campo Renda */}
-            <Text color="$textLight800" fontWeight="$bold" mb="$1">Renda Mensal (R$)</Text>
+            <Text color="$textLight800" fontWeight="$bold" mb="$1">
+              Renda Mensal (R$)
+            </Text>
             <Input
               value={income}
               onChangeText={(text) => {
@@ -258,13 +338,13 @@ export function Perfil() {
                 setRenda(valorNumerico);
                 Alert.alert("Sucesso", "Dados atualizados com sucesso!");
               }}
-              bg="#FF9100"
+              bg={theme.colors.accent}
               rounded="$lg"
               size="lg"
               sx={{
-                  ":pressed": {
-                      bg: "$orange700"
-                  }
+                ":pressed": {
+                  bg: theme.colors.orange700,
+                },
               }}
             >
               <Text color="$white" fontWeight="$bold">
@@ -273,7 +353,8 @@ export function Perfil() {
             </Button>
           </Box>
 
-          {/* Seção de Filtro de Gastos */}
+          {/* 📈 Seção de Histórico de Gastos — pode ser reordenada; blocos se adaptam ao espaço disponível */}
+
           <Box
             bg="$white"
             rounded="$xl"
@@ -288,30 +369,35 @@ export function Perfil() {
             <HStack space="md" mb="$4">
               <Button
                 flex={1}
-                variant={filterType === 'month' ? "solid" : "outline"}
-                action={filterType === 'month' ? "primary" : "secondary"}
-                onPress={() => setFilterType('month')}
-                isDisabled={filterType === 'month'}
+                variant={filterType === "month" ? "solid" : "outline"}
+                action={filterType === "month" ? "primary" : "secondary"}
+                onPress={() => setFilterType("month")}
+                isDisabled={filterType === "month"}
               >
                 <Text>Mês</Text>
               </Button>
               <Button
                 flex={1}
-                variant={filterType === 'year' ? "solid" : "outline"}
-                action={filterType === 'year' ? "primary" : "secondary"}
-                onPress={() => setFilterType('year')}
-                isDisabled={filterType === 'year'}
+                variant={filterType === "year" ? "solid" : "outline"}
+                action={filterType === "year" ? "primary" : "secondary"}
+                onPress={() => setFilterType("year")}
+                isDisabled={filterType === "year"}
               >
                 <Text>Ano</Text>
               </Button>
             </HStack>
 
             <Pressable onPress={() => setShowDatePicker(true)} mb="$4">
-              <HStack alignItems="center" space="sm" p="$2" borderWidth={1} borderColor="$coolGray300" rounded="$md">
+              <HStack
+                alignItems="center"
+                space="sm"
+                p="$2"
+                borderWidth={1}
+                borderColor="$coolGray300"
+                rounded="$md"
+              >
                 <Icon as={CalendarDaysIcon} size="md" color="$textLight600" />
-                <Text color="$textLight700">
-                  {formattedPeriod}
-                </Text>
+                <Text color="$textLight700">{formattedPeriod}</Text>
               </HStack>
             </Pressable>
 
@@ -343,10 +429,10 @@ export function Perfil() {
 const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   scrollViewContentContainer: {
     flexGrow: 1,
-    paddingBottom: 80,
+    paddingBottom: 80, // evita que o conteúdo seja coberto pela barra inferior
   },
 });

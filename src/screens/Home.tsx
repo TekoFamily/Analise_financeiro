@@ -1,157 +1,234 @@
 // src/screens/Home.tsx
+// 🏠 Tela Home
+// - Painel principal do app.
+// - Mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto.
+// src/components/ → Componentes reutilizáveis (botões, inputs, etc.)
+// src/screens/ → Telas do app (Login, Dashboard, etc.)
+// src/context/ → Contextos globais, como autenticação e tema
+// src/hooks/ → Hooks personalizados
+// src/routes/ → Configuração de navegação
+// src/utils/ → Funções auxiliares (formatação, cálculos, etc.)
+// src/config/ → Configurações globais (tema, API, ambiente)
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
+import { Center, Text, Box, VStack, HStack } from "@gluestack-ui/themed";
 import {
-  Center,
-  Text,
-  Box,
-  VStack,
-  HStack,
-  ScrollView,
-  Pressable,
-} from "@gluestack-ui/themed";
-import { Dimensions, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
-import { ResumoDoMes } from "../components/ResumoDoMes";
-import { UltimosGastos } from "../components/UltimosGastos";
-import { AdicionarGastoForm } from "../components/AdicionarGastoForm"; // Novo componente
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  ListRenderItemInfo,
+  FlatList,
+} from "react-native";
+import { ResumoDoMes } from "../components/domain/ResumoDoMes";
+import { UltimosGastos } from "../components/domain/UltimosGastos";
+import { AdicionarGastoForm } from "../components/domain/AdicionarGastoForm";
 import { ToggleSaldoButton } from "../components/ToggleSaldoButton";
 import { Image } from "react-native";
-import { useDespesas } from "../context/ExpensesContext"; // já está importado
+import { useDespesas } from "../context/ExpensesContext";
+import { useFinancialCalculations } from "../hooks/useFinancialCalculations";
+import { formatCurrencyDisplay } from "../utils/formatUtils";
 import { Alert } from "react-native";
+import { theme } from "../config/theme";
+
+interface GastoFormProps {
+  valor: string;
+  categoria: string;
+  data: string;
+  descricao: string;
+  tipo: "" | "fixo" | "variavel";
+}
+
+interface Section {
+  key: string;
+  component: React.ReactElement; // Alterado para React.ReactElement
+}
 
 // Tela Home: painel principal do app, mostra saldo, resumo do mês, últimos gastos e formulário para adicionar gasto
 export function Home() {
-  // Hook do contexto para acessar despesas, função de adicionar e renda
-  const { despesas, adicionarDespesa, renda } = useDespesas();
-
-  // Lista de categorias fixas para o formulário
-  const categorias = ["Mercado", "Lazer", "Transporte"];
-
-  // Calcula o total de gastos e saldo disponível
-  const gastosTotais = despesas.reduce((sum, d) => sum + (d.valor || 0), 0);
-  const saldo = (renda || 0) - gastosTotais;
-
-  // Estado para mostrar ou ocultar o saldo
+  const { despesas, criarDespesa, renda, categorias } = useDespesas();
+  const { gastosTotais, saldo } = useFinancialCalculations();
   const [saldoVisivel, setSaldoVisivel] = useState(true);
+
+  // Otimização: useCallback estabiliza as funções, evitando que os componentes
+  // filhos que as recebem como props renderizem desnecessariamente.
+  const handleToggleSaldo = useCallback(() => {
+    setSaldoVisivel((v) => !v);
+  }, []);
+
+  const handleSalvarGasto = useCallback(
+    (dados: GastoFormProps) => {
+      if (dados.tipo && (dados.tipo === "fixo" || dados.tipo === "variavel")) {
+        criarDespesa({
+          valor: dados.valor,
+          categoria: dados.categoria,
+          data: dados.data,
+          descricao: dados.descricao,
+          tipo: dados.tipo,
+        });
+        Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
+      }
+    },
+    [criarDespesa],
+  );
+
+  // Otimização: useMemo previne a re-renderização de componentes pesados
+  // que não dependem de estados que mudam com frequência (como saldoVisivel).
+  const sections = useMemo(
+    () => [
+      {
+        key: "header",
+        component: (
+          <Box
+            w="95%"
+            alignSelf="center"
+            px="$6"
+            pt="$7"
+            pb="$7"
+            bg="$white"
+            rounded="$2xl"
+            style={{
+              elevation: 4,
+              shadowColor: "#000",
+              shadowOpacity: 0.12,
+              shadowRadius: 6,
+            }}
+            mb="$4"
+            mt="$8"
+          >
+            <Center mb="$4">
+              <Image
+                source={require("../assets/logotko.png")}
+                style={{ width: 100, height: 100, resizeMode: "contain" }}
+              />
+            </Center>
+            <VStack space="md">
+              <Text fontSize="$md" color="$gray600" mb="$2" textAlign="center">
+                Saldo disponível
+              </Text>
+              <HStack alignItems="center" justifyContent="center" space="sm">
+                <Text fontSize="$4xl" fontWeight="bold" color="$black">
+                  {saldoVisivel
+                    ? `R$ ${formatCurrencyDisplay(saldo)}`
+                    : "••••••"}
+                </Text>
+                <ToggleSaldoButton
+                  visivel={saldoVisivel}
+                  onToggle={handleToggleSaldo}
+                />
+              </HStack>
+              <HStack
+                alignItems="center"
+                justifyContent="space-between"
+                mt="$2"
+              >
+                <HStack alignItems="center" space="xs">
+                  <Text fontSize="$md">💰</Text>
+                  <Text fontSize="$sm" color="$gray600">
+                    Renda: R$ {renda.toLocaleString("pt-BR")}
+                  </Text>
+                </HStack>
+                <HStack alignItems="center" space="xs">
+                  <Text fontSize="$md">💸</Text>
+                  <Text fontSize="$sm" color="$gray600">
+                    Gastos: R$ {gastosTotais.toLocaleString("pt-BR")}
+                  </Text>
+                </HStack>
+              </HStack>
+            </VStack>
+          </Box>
+        ),
+      },
+      {
+        key: "resumo",
+        component: (
+          <Box
+            w="92%"
+            alignSelf="center"
+            bg="$orange100"
+            p="$5"
+            rounded="$xl"
+            style={{
+              elevation: 2,
+              shadowColor: "#000",
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+            }}
+            mb="$3"
+          >
+            <ResumoDoMes />
+          </Box>
+        ),
+      },
+      {
+        key: "gastos",
+        component: <UltimosGastos despesas={despesas} />,
+      },
+      {
+        key: "form",
+        component: (
+          <Box
+            w="92%"
+            alignSelf="center"
+            bg="$white"
+            p="$7"
+            rounded="$2xl"
+            style={{
+              elevation: 4,
+              shadowColor: "#000",
+              shadowOpacity: 0.12,
+              shadowRadius: 51,
+            }}
+            mt="$2"
+            mb="$10"
+          >
+            <Text mb="$4" fontSize="$xl" fontWeight="bold" color="$black">
+              Adicionar gasto
+            </Text>
+            <AdicionarGastoForm
+              categorias={categorias}
+              onSalvar={handleSalvarGasto}
+            />
+          </Box>
+        ),
+      },
+    ],
+    [
+      saldo,
+      saldoVisivel,
+      handleToggleSaldo,
+      renda,
+      gastosTotais,
+      despesas,
+      categorias,
+      handleSalvarGasto,
+    ],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: ListRenderItemInfo<Section>) => item.component,
+    [],
+  );
 
   // Renderização da tela
   return (
     <KeyboardAvoidingView
       style={styles.keyboardAvoidingView}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
     >
-      <ScrollView
+      <FlatList
+        data={sections}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.key}
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContentContainer}
         keyboardShouldPersistTaps="handled"
-      >
-        {/* Header com logo e saldo */}
-        <Box
-          w="100%"
-          px="$4"
-          pt="$10"
-          pb="$10"
-          bg="$white"
-          style={{ position: "relative" }}
-          mt="$10"
-        >
-          <HStack justifyContent="flex-end" alignItems="center">
-            {/* Logo do app */}
-            <Image
-              source={require("../assets/logotko.png")}
-              style={{
-                width: 80,
-                height: 80,
-                resizeMode: "contain",
-                marginRight: "80%", // ajuste esse valor para mover mais ou menos
-              }}
-            />
-          </HStack>
-          <VStack mt="$4" space="sm">
-            <HStack alignItems="center" space="sm">
-              {/* Saldo do usuário, pode ser ocultado */}
-              <Text fontSize="$2xl" fontWeight="bold" color="$black">
-                Saldo: {saldoVisivel
-                  ? `R$ ${saldo.toLocaleString("pt-BR", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}`
-                  : "••••••"}
-              </Text>
-              {/* Botão para alternar visibilidade do saldo */}
-              <ToggleSaldoButton
-                visivel={saldoVisivel}
-                onToggle={() => setSaldoVisivel((v) => !v)}
-              />
-            </HStack>
-            <HStack alignItems="center" space="md">
-              {/* Renda e gastos totais */}
-              <HStack alignItems="center" space="xs">
-                <Text fontSize="$md">💰</Text>
-                <Text fontSize="$sm" color="$gray600">
-                  Renda: R$ {renda.toLocaleString("pt-BR")}
-                </Text>
-              </HStack>
-              <HStack alignItems="center" space="xs">
-                <Text fontSize="$md">💸</Text>
-                <Text fontSize="$sm" color="$gray600">
-                  Gastos: R$ {gastosTotais.toLocaleString("pt-BR")}
-                </Text>
-              </HStack>
-            </HStack>
-          </VStack>
-        </Box>
-        {/* Resumo do mês */}
-        <Box
-          w="90%"
-          alignSelf="center"
-          bg="$orange100"
-          p="$4"
-          rounded="$lg"
-          mt="$4"
-        >
-          <ResumoDoMes />
-        </Box>
-        {/* Últimos Gastos */}
-        <UltimosGastos despesas={despesas} />
-        {/* Formulário de Adicionar Gasto */}
-        <Box
-          w="90%"
-          alignSelf="center"
-          bg="$white"
-          p="$4"
-          rounded="$lg"
-          mt="$6"
-          mb="$8"
-        >
-          <Text mb="$4" fontSize="$lg" fontWeight="bold" color="$black">
-            Adicionar gasto
-          </Text>
-          <AdicionarGastoForm
-            categorias={categorias}
-            onSalvar={({ valor, categoria, data, descricao, tipo }) => {
-              if (!valor || !categoria || !data || !descricao || !tipo) return;
-              const novaDespesa = {
-                id: Date.now(),
-                nome: categoria.charAt(0).toUpperCase() + categoria.slice(1),
-                valor: parseFloat(valor.replace(",", ".")),
-                data,
-                icone:
-                  categoria.toLowerCase() === "mercado"
-                    ? "🛒"
-                    : categoria.toLowerCase() === "lazer"
-                    ? "🎉"
-                    : "🚗",
-                descricao,
-                tipo,
-              };
-              adicionarDespesa(novaDespesa); // Use o contexto!
-              Alert.alert("Sucesso", "Gasto adicionado com sucesso!");
-            }}
-          />
-        </Box>
-      </ScrollView>
+        // Otimizações de performance da FlatList
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -159,17 +236,17 @@ export function Home() {
 const styles = StyleSheet.create({
   keyboardAvoidingView: {
     flex: 1,
+    backgroundColor: theme.colors.background, // 🎨 Fundo padrão do app
   },
   scrollViewContentContainer: {
     flexGrow: 1,
-    paddingBottom: 80,
-    backgroundColor: '#f5f5f5',
+    paddingBottom: 80, // Espaço no final da lista
   },
   // You can move other inline styles here if needed, for example:
   // logoImage: {
   //   width: 80,
   //   height: 80,
   //   resizeMode: "contain",
-  //   marginRight: "80%", 
+  //   marginRight: "80%",
   // }
 });
