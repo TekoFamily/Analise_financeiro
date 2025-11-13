@@ -179,7 +179,7 @@ export function Signin() {
       >
         {isLoading ? (
           <Center flex={1} bg="white" h="$full">
-            <Spinner size="large" color={theme.colors.primary} />
+            <Spinner size="large" color={theme.colors.accent} />
           </Center>
         ) : (
           <VStack flex={1} px="$10" justifyContent="center">

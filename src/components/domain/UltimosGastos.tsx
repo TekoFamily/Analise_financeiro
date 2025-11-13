@@ -66,9 +66,11 @@ const GastoItem = React.memo(({ item }: { item: Despesa }) => {
   );
 });
 
+import { ListRenderItemInfo } from "react-native";
+
 export function UltimosGastos({ despesas }: UltimosGastosProps) {
   // 2. Define a função de renderização com useCallback para estabilidade
-  const renderGasto = useCallback(({ item }: { item: Despesa }) => {
+  const renderGasto = useCallback(({ item }: ListRenderItemInfo<Despesa>) => {
     return <GastoItem item={item} />;
   }, []);
 
@@ -85,7 +87,7 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
         <EmptyState
           icon="💸"
           title="Nenhum Gasto Recente"
-          message="Quando você adicionar um novo gasto, ele aparecerá aqui."
+          description="Quando você adicionar um novo gasto, ele aparecerá aqui."
         />
       </VStack>
     );
@@ -97,11 +99,11 @@ export function UltimosGastos({ despesas }: UltimosGastosProps) {
       <Text px="$4" mb="$3" fontSize="$lg" fontWeight="bold" color="$black">
         Últimos gastos
       </Text>
-      <FlatList
+      <FlatList<Despesa> // Tipagem explícita aqui
         data={despesas.slice(0, 10)} // Limita a 10 itens para performance
         horizontal
-        renderItem={renderGasto}
-        keyExtractor={keyExtractor}
+        renderItem={({ item }) => <GastoItem item={item} />}
+        keyExtractor={(item) => item.id.toString()}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: 16,
