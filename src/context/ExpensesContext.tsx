@@ -1,7 +1,7 @@
 // src/context/ExpensesContext.tsx
 // 📦 Pasta: src/context
 // Responsável por: Contexto global de despesas (criação, listagem, persistência e limpeza)
-// Observações: Usa AsyncStorage para persistir dados; expõe hook useDespesas.
+// Observações: Usa API para persistir dados; expõe hook useDespesas.
 import React, {
   createContext,
   useContext,
@@ -12,18 +12,20 @@ import React, {
   useMemo,
 } from "react";
 
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { despesasService } from "../services/despesasService";
+import { userService } from "../services/userService";
+import { useAuth } from "./AuthContext";
 
 // Interface que define o formato de uma despesa
-
 export interface Despesa {
   id: number; // Identificador único da despesa
   nome: string; // Nome da despesa
   valor: number; // Valor da despesa
-  data: string; // Data da despesa
+  data: string; // Data da despesa (formato ISO ou "DD/MM/YYYY")
   icone: string; // Ícone associado à despesa
   descricao: string; // Descrição detalhada da despesa
   tipo: "fixo" | "variavel"; // Tipo da despesa
+  categoria?: string; // Categoria da despesa
 }
 
 // Interface que define o formato do contexto das despesas
@@ -36,11 +38,13 @@ interface DespesasContextType {
     data: string;
     descricao: string;
     tipo: "fixo" | "variavel";
-  }) => void; // Função para criar despesa a partir dos dados do formulário
+  }) => Promise<void>; // Função para criar despesa a partir dos dados do formulário
   renda: number; // Valor da renda total
-  setRenda: (valor: number) => void; // Função para atualizar a renda
+  setRenda: (valor: number) => Promise<void>; // Função para atualizar a renda
   limparDados: () => Promise<void>; // Função para limpar todos os dados de despesas
   categorias: string[]; // Lista de categorias disponíveis
+  isLoading: boolean; // Indica se está carregando dados
+  error: string | null; // Mensagem de erro, se houver
 }
 
 // Cria o contexto das despesas, inicialmente indefinido
@@ -64,82 +68,103 @@ function isValidDespesa(despesa: any): despesa is Despesa {
   );
 }
 
-// Função auxiliar para validar array de despesas
-function validateDespesas(data: any): Despesa[] {
-  if (!Array.isArray(data)) {
-    console.warn("Dados de despesas não são um array, retornando array vazio");
-    return [];
+// Função auxiliar para converter data do formato brasileiro para ISO
+function convertDateToISO(dateStr: string): string {
+  // Se já estiver em formato ISO, retorna
+  if (dateStr.includes("T") || dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return dateStr;
   }
 
-  const validDespesas = data.filter((despesa) => {
-    const isValid = isValidDespesa(despesa);
-    if (!isValid) {
-      console.warn("Despesa inválida encontrada, ignorando:", despesa);
-    }
-    return isValid;
-  });
+  // Tenta converter de DD/MM/YYYY para YYYY-MM-DD
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
 
-  return validDespesas;
+  return dateStr;
+}
+
+// Função auxiliar para converter data de ISO para formato brasileiro
+function convertDateFromISO(dateStr: string): string {
+  // Se já estiver em formato brasileiro, retorna
+  if (dateStr.includes("/")) {
+    return dateStr;
+  }
+
+  // Converte de YYYY-MM-DD para DD/MM/YYYY
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  return dateStr;
 }
 
 // Componente provedor do contexto das despesas
 export function DespesasProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, userId } = useAuth();
+
   // Estado para armazenar a lista de despesas
   const [despesas, setDespesas] = useState<Despesa[]>([]);
   // Estado para armazenar o valor da renda
   const [renda, setRenda] = useState<number>(0);
-  // Flag para evitar salvar durante o carregamento inicial
-  const isInitialMount = useRef(true);
+  // Estado para indicar se está carregando
+  const [isLoading, setIsLoading] = useState(false);
+  // Estado para mensagens de erro
+  const [error, setError] = useState<string | null>(null);
   // Flag para verificar se o componente está montado
   const isMounted = useRef(true);
 
-  // Carregar despesas e renda ao iniciar o app
+  // Carregar despesas e renda quando o usuário estiver autenticado
   useEffect(() => {
+    if (!isAuthenticated || !userId) {
+      // Se não estiver autenticado, limpa os dados
+      setDespesas([]);
+      setRenda(0);
+      return;
+    }
+
     let isSubscribed = true;
 
     const loadData = async () => {
-      try {
-        // Carregar despesas
-        const savedDespesas = await AsyncStorage.getItem("despesas");
-        if (savedDespesas && isSubscribed && isMounted.current) {
-          try {
-            const parsed = JSON.parse(savedDespesas);
-            const validatedDespesas = validateDespesas(parsed);
-            setDespesas(validatedDespesas);
-          } catch (parseError) {
-            console.error("Erro ao fazer parse das despesas:", parseError);
-            // Em caso de erro de parse, limpa os dados corrompidos
-            await AsyncStorage.removeItem("despesas");
-            setDespesas([]);
-          }
-        }
+      setIsLoading(true);
+      setError(null);
 
-        // Carregar renda
-        const savedRenda = await AsyncStorage.getItem("renda");
-        if (savedRenda && isSubscribed && isMounted.current) {
-          try {
-            const rendaNum = Number(savedRenda);
-            if (!isNaN(rendaNum) && rendaNum >= 0) {
-              setRenda(rendaNum);
-            } else {
-              console.warn("Valor de renda inválido, usando 0");
-              setRenda(0);
-            }
-          } catch (parseError) {
-            console.error("Erro ao processar renda:", parseError);
-            setRenda(0);
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao carregar dados do AsyncStorage:", error);
+      try {
+        // Carregar despesas e renda em paralelo
+        const [despesasData, rendaData] = await Promise.all([
+          despesasService.getAll(),
+          userService.getRenda(),
+        ]);
+
+        if (!isSubscribed || !isMounted.current) return;
+
+        // Converter datas de ISO para formato brasileiro para exibição
+        const despesasConvertidas = despesasData.map((despesa) => ({
+          ...despesa,
+          data: convertDateFromISO(despesa.data),
+        }));
+
+        setDespesas(despesasConvertidas);
+        setRenda(rendaData || 0);
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
         if (isSubscribed && isMounted.current) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Erro ao carregar dados do servidor"
+          );
           setDespesas([]);
           setRenda(0);
         }
       } finally {
         if (isSubscribed && isMounted.current) {
-          // Marca que o carregamento inicial terminou
-          isInitialMount.current = false;
+          setIsLoading(false);
         }
       }
     };
@@ -149,7 +174,7 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isSubscribed = false;
     };
-  }, []);
+  }, [isAuthenticated, userId]);
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -157,49 +182,6 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
       isMounted.current = false;
     };
   }, []);
-
-  // Salvar despesas sempre que mudar (mas não durante o carregamento inicial)
-  useEffect(() => {
-    // Não salva durante o carregamento inicial para evitar loops
-    if (isInitialMount.current || !isMounted.current) return;
-
-    const saveData = async () => {
-      try {
-        // Validar despesas antes de salvar
-        const validDespesas = validateDespesas(despesas);
-        await AsyncStorage.setItem("despesas", JSON.stringify(validDespesas));
-      } catch (error) {
-        console.error("Erro ao salvar despesas:", error);
-      }
-    };
-
-    // Debounce para evitar muitas escritas
-    const timeoutId = setTimeout(saveData, 300);
-    return () => clearTimeout(timeoutId);
-  }, [despesas]);
-
-  // Salvar renda sempre que mudar (mas não durante o carregamento inicial)
-  useEffect(() => {
-    // Não salva durante o carregamento inicial para evitar loops
-    if (isInitialMount.current || !isMounted.current) return;
-
-    const saveData = async () => {
-      try {
-        // Validar renda antes de salvar
-        if (typeof renda === "number" && !isNaN(renda) && renda >= 0) {
-          await AsyncStorage.setItem("renda", renda.toString());
-        } else {
-          console.warn("Tentativa de salvar renda inválida:", renda);
-        }
-      } catch (error) {
-        console.error("Erro ao salvar renda:", error);
-      }
-    };
-
-    // Debounce para evitar muitas escritas
-    const timeoutId = setTimeout(saveData, 300);
-    return () => clearTimeout(timeoutId);
-  }, [renda]);
 
   // Lista de categorias padrão - memoizada para evitar recriação
   const categorias = useMemo(() => ["Mercado", "Lazer", "Transporte"], []);
@@ -213,75 +195,133 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
     return "💰";
   }, []);
 
-  // Função para adicionar uma nova despesa à lista - memoizada
+  // Função para adicionar uma nova despesa à lista (otimista)
   const adicionarDespesa = useCallback((despesa: Despesa) => {
     if (!isValidDespesa(despesa)) {
       console.error("Tentativa de adicionar despesa inválida:", despesa);
       return;
     }
 
+    // Atualização otimista - adiciona imediatamente à lista
     setDespesas((prev) => [despesa, ...prev]);
   }, []);
 
   // Função para criar despesa a partir dos dados do formulário - memoizada
   const criarDespesa = useCallback(
-    (dados: {
+    async (dados: {
       valor: string;
       categoria: string;
       data: string;
       descricao: string;
       tipo: "fixo" | "variavel";
     }) => {
+      if (!isAuthenticated || !userId) {
+        setError("Você precisa estar autenticado para criar despesas");
+        throw new Error("Usuário não autenticado");
+      }
+
       try {
         const valorNum = parseFloat(dados.valor.replace(",", "."));
 
         if (isNaN(valorNum) || valorNum <= 0) {
-          console.error("Valor inválido para despesa:", dados.valor);
-          return;
+          const errorMsg = "Valor inválido para despesa";
+          setError(errorMsg);
+          throw new Error(errorMsg);
         }
 
-        const novaDespesa: Despesa = {
-          id: Date.now(),
+        // Converter data para formato ISO
+        const dataISO = convertDateToISO(dados.data);
+
+        // Criar despesa na API
+        const novaDespesa = await despesasService.create({
           nome:
             dados.categoria.charAt(0).toUpperCase() + dados.categoria.slice(1),
           valor: valorNum,
-          data: dados.data,
+          data: dataISO,
           icone: getIconForCategory(dados.categoria),
           descricao: dados.descricao,
           tipo: dados.tipo,
+          categoria: dados.categoria,
+        });
+
+        // Converter data de volta para formato brasileiro
+        const despesaConvertida = {
+          ...novaDespesa,
+          data: convertDateFromISO(novaDespesa.data),
         };
 
-        adicionarDespesa(novaDespesa);
-      } catch (error) {
-        console.error("Erro ao criar despesa:", error);
+        // Adicionar à lista local
+        setDespesas((prev) => [despesaConvertida, ...prev]);
+        setError(null);
+      } catch (err) {
+        console.error("Erro ao criar despesa:", err);
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Erro ao criar despesa. Tente novamente.";
+        setError(errorMsg);
+        throw err;
       }
     },
-    [adicionarDespesa, getIconForCategory],
+    [isAuthenticated, userId, getIconForCategory]
+  );
+
+  // Função para atualizar renda
+  const setRendaMemo = useCallback(
+    async (valor: number) => {
+      if (!isAuthenticated || !userId) {
+        setError("Você precisa estar autenticado para atualizar a renda");
+        return;
+      }
+
+      if (typeof valor !== "number" || isNaN(valor) || valor < 0) {
+        console.error("Tentativa de definir renda inválida:", valor);
+        setError("Valor de renda inválido");
+        return;
+      }
+
+      try {
+        await userService.updateRenda(valor);
+        setRenda(valor);
+        setError(null);
+      } catch (err) {
+        console.error("Erro ao atualizar renda:", err);
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Erro ao atualizar renda. Tente novamente.";
+        setError(errorMsg);
+      }
+    },
+    [isAuthenticated, userId]
   );
 
   // Função para limpar todos os dados de despesas e renda - memoizada
   const limparDados = useCallback(async () => {
+    if (!isAuthenticated || !userId) {
+      return;
+    }
+
     try {
-      await Promise.all([
-        AsyncStorage.removeItem("despesas"),
-        AsyncStorage.removeItem("renda"),
-      ]);
+      // Deletar todas as despesas
+      await Promise.all(despesas.map((d) => despesasService.delete(d.id)));
+
+      // Limpar renda
+      await userService.updateRenda(0);
+
       setDespesas([]);
       setRenda(0);
-    } catch (error) {
-      console.error("Erro ao limpar dados:", error);
-      throw error;
+      setError(null);
+    } catch (err) {
+      console.error("Erro ao limpar dados:", err);
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "Erro ao limpar dados. Tente novamente.";
+      setError(errorMsg);
+      throw err;
     }
-  }, []);
-
-  // Memoizar o setRenda para evitar recriações
-  const setRendaMemo = useCallback((valor: number) => {
-    if (typeof valor === "number" && !isNaN(valor) && valor >= 0) {
-      setRenda(valor);
-    } else {
-      console.error("Tentativa de definir renda inválida:", valor);
-    }
-  }, []);
+  }, [isAuthenticated, userId, despesas]);
 
   // Memoizar o valor do contexto para evitar re-renders desnecessários
   const contextValue = useMemo(
@@ -293,6 +333,8 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
       setRenda: setRendaMemo,
       limparDados,
       categorias,
+      isLoading,
+      error,
     }),
     [
       despesas,
@@ -302,6 +344,8 @@ export function DespesasProvider({ children }: { children: React.ReactNode }) {
       setRendaMemo,
       limparDados,
       categorias,
+      isLoading,
+      error,
     ],
   );
 

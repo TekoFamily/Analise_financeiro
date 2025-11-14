@@ -7,12 +7,13 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDespesas, Despesa } from "./ExpensesContext";
 import { Alert } from "react-native";
+import { useDespesas, Despesa } from "./ExpensesContext";
+import { metasService } from "../services/metasService";
+import { useAuth } from "./AuthContext";
 
 export type Meta = {
-  id: string;
+  id: number | string; // Aceita number (do backend) ou string (para compatibilidade)
   nome: string;
   valor: number;
   prazo: Date;
@@ -23,10 +24,14 @@ export type Meta = {
 
 interface MetasContextType {
   metas: Meta[];
-  adicionarMeta: (meta: Omit<Meta, "id" | "criadoEm" | "valorAtual">) => void;
-  adicionarValorNaMeta: (metaId: string, valor: number) => void;
-  excluirMeta: (metaId: string) => void;
+  adicionarMeta: (
+    meta: Omit<Meta, "id" | "criadoEm" | "valorAtual">
+  ) => Promise<void>;
+  adicionarValorNaMeta: (metaId: number | string, valor: number) => Promise<void>;
+  excluirMeta: (metaId: number | string) => Promise<void>;
   carregarMetas: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const MetasContext = createContext<MetasContextType | undefined>(undefined);
@@ -36,7 +41,7 @@ function isValidMeta(meta: any): boolean {
   return (
     meta &&
     typeof meta === "object" &&
-    typeof meta.id === "string" &&
+    (typeof meta.id === "string" || typeof meta.id === "number") &&
     typeof meta.nome === "string" &&
     typeof meta.valor === "number" &&
     !isNaN(meta.valor) &&
@@ -49,68 +54,35 @@ function isValidMeta(meta: any): boolean {
   );
 }
 
+// Função auxiliar para converter data de string para Date
+function parseDate(dateStr: string | Date): Date {
+  if (dateStr instanceof Date) {
+    return dateStr;
+  }
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    throw new Error("Data inválida");
+  }
+  return date;
+}
+
 export function MetasProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, userId } = useAuth();
   const [metas, setMetas] = useState<Meta[]>([]);
   const { adicionarDespesa } = useDespesas();
   const isMounted = useRef(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Carregar metas do AsyncStorage
-  const carregarMetas = useCallback(async () => {
-    try {
-      const metasSalvas = await AsyncStorage.getItem("@metas");
-      if (metasSalvas && isMounted.current) {
-        try {
-          const metasParsed = JSON.parse(metasSalvas);
-
-          if (!Array.isArray(metasParsed)) {
-            console.warn("Dados de metas não são um array, limpando dados");
-            await AsyncStorage.removeItem("@metas");
-            return;
-          }
-
-          const metasConvertidas = metasParsed
-            .filter((meta: any) => {
-              const isValid = isValidMeta(meta);
-              if (!isValid) {
-                console.warn("Meta inválida encontrada, ignorando:", meta);
-              }
-              return isValid;
-            })
-            .map((meta: any) => ({
-              ...meta,
-              prazo: new Date(meta.prazo),
-              criadoEm: new Date(meta.criadoEm),
-            }));
-
-          if (isMounted.current) {
-            setMetas(metasConvertidas);
-          }
-        } catch (parseError) {
-          console.error("Erro ao fazer parse das metas:", parseError);
-          await AsyncStorage.removeItem("@metas");
-          if (isMounted.current) {
-            setMetas([]);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar metas:", error);
-      if (isMounted.current) {
-        setMetas([]);
-      }
-    }
-  }, []);
-
-  // Flag para controlar carregamento inicial
-  const hasLoaded = useRef(false);
-
-  // Carregar metas ao iniciar (apenas uma vez)
+  // Carregar metas quando o usuário estiver autenticado
   useEffect(() => {
-    if (!hasLoaded.current && isMounted.current) {
-      hasLoaded.current = true;
-      carregarMetas();
+    if (!isAuthenticated || !userId) {
+      setMetas([]);
+      return;
     }
-  }, [carregarMetas]);
+
+    carregarMetas();
+  }, [isAuthenticated, userId]);
 
   // Cleanup ao desmontar
   useEffect(() => {
@@ -119,69 +91,122 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // Flag para evitar salvar durante o carregamento inicial
-  const isInitialMount = useRef(true);
-
-  // Salvar metas no AsyncStorage sempre que mudar (mas não durante o carregamento inicial)
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
+  // Carregar metas do servidor
+  const carregarMetas = useCallback(async () => {
+    if (!isAuthenticated || !userId) {
       return;
     }
 
-    if (!isMounted.current) return;
+    setIsLoading(true);
+    setError(null);
 
-    const salvarMetas = async () => {
-      try {
-        // Validar metas antes de salvar
-        const metasValidas = metas.filter((meta) => {
+    try {
+      const metasData = await metasService.getAll();
+
+      if (!isMounted.current) return;
+
+      // Converter datas de string para Date
+      const metasConvertidas = metasData
+        .filter((meta: any) => {
           const isValid = isValidMeta(meta);
           if (!isValid) {
-            console.warn("Meta inválida detectada ao salvar:", meta);
+            console.warn("Meta inválida encontrada, ignorando:", meta);
           }
           return isValid;
-        });
+        })
+        .map((meta: any) => ({
+          ...meta,
+          prazo: parseDate(meta.prazo),
+          criadoEm: parseDate(meta.criadoEm || new Date()),
+        }));
 
-        await AsyncStorage.setItem("@metas", JSON.stringify(metasValidas));
-      } catch (error) {
-        console.error("Erro ao salvar metas:", error);
+      setMetas(metasConvertidas);
+    } catch (err) {
+      console.error("Erro ao carregar metas:", err);
+      if (isMounted.current) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro ao carregar metas do servidor"
+        );
+        setMetas([]);
       }
-    };
-
-    // Debounce: aguarda 300ms antes de salvar para evitar muitas escritas
-    const timeoutId = setTimeout(salvarMetas, 300);
-    return () => clearTimeout(timeoutId);
-  }, [metas]);
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  }, [isAuthenticated, userId]);
 
   // Adicionar nova meta
   const adicionarMeta = useCallback(
-    (novaMeta: Omit<Meta, "id" | "criadoEm" | "valorAtual">) => {
-      const meta: Meta = {
-        ...novaMeta,
-        id: Date.now().toString(),
-        criadoEm: new Date(),
-        valorAtual: 0,
-      };
-      setMetas((prev) => [meta, ...prev]);
-      Alert.alert("Sucesso", "Meta adicionada com sucesso!");
+    async (novaMeta: Omit<Meta, "id" | "criadoEm" | "valorAtual">) => {
+      if (!isAuthenticated || !userId) {
+        setError("Você precisa estar autenticado para criar metas");
+        Alert.alert("Erro", "Você precisa estar autenticado para criar metas");
+        return;
+      }
+
+      try {
+        // Converter prazo para ISO string
+        const prazoISO =
+          novaMeta.prazo instanceof Date
+            ? novaMeta.prazo.toISOString()
+            : new Date(novaMeta.prazo).toISOString();
+
+        const metaCriada = await metasService.create({
+          nome: novaMeta.nome,
+          valor: novaMeta.valor,
+          prazo: prazoISO,
+          categoria: novaMeta.categoria,
+        });
+
+        // Converter datas de volta para Date
+        const meta: Meta = {
+          ...metaCriada,
+          prazo: parseDate(metaCriada.prazo),
+          criadoEm: parseDate(metaCriada.criadoEm || new Date()),
+        };
+
+        setMetas((prev) => [meta, ...prev]);
+        setError(null);
+        Alert.alert("Sucesso", "Meta adicionada com sucesso!");
+      } catch (err) {
+        console.error("Erro ao adicionar meta:", err);
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "Erro ao adicionar meta. Tente novamente.";
+        setError(errorMsg);
+        Alert.alert("Erro", errorMsg);
+        throw err;
+      }
     },
-    [],
+    [isAuthenticated, userId]
   );
 
   // Função auxiliar para confirmar e adicionar valor
   const confirmarEAdicionarValor = useCallback(
-    (metaId: string, valor: number, meta: Meta) => {
+    async (metaId: number | string, valor: number, meta: Meta) => {
       try {
-        if (!isMounted.current) return;
+        if (!isMounted.current || !isAuthenticated || !userId) return;
 
-        // Atualizar meta
+        // Atualizar meta no servidor
+        const metaAtualizada = await metasService.addValue(metaId, valor);
+
+        // Atualizar estado local
         setMetas((prev) =>
           prev.map((m) =>
-            m.id === metaId ? { ...m, valorAtual: m.valorAtual + valor } : m,
-          ),
+            m.id === metaId
+              ? {
+                  ...m,
+                  valorAtual: metaAtualizada.valorAtual,
+                }
+              : m
+          )
         );
 
-        // Registrar como gasto imediatamente (não usar setTimeout)
+        // Registrar como gasto
         adicionarDespesa({
           id: Date.now(),
           nome: `Meta: ${meta.nome}`,
@@ -192,23 +217,30 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
           tipo: "variavel",
         });
 
+        setError(null);
         Alert.alert(
           "Sucesso",
-          "Valor adicionado à meta e registrado como gasto!",
+          "Valor adicionado à meta e registrado como gasto!"
         );
       } catch (error) {
         console.error("Erro ao adicionar valor na meta:", error);
-        Alert.alert("Erro", "Não foi possível adicionar o valor à meta.");
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "Não foi possível adicionar o valor à meta.";
+        setError(errorMsg);
+        Alert.alert("Erro", errorMsg);
+        throw error;
       }
     },
-    [adicionarDespesa],
+    [adicionarDespesa, isAuthenticated, userId]
   );
 
   // Adicionar valor à meta
   const adicionarValorNaMeta = useCallback(
-    (metaId: string, valor: number) => {
+    async (metaId: number | string, valor: number) => {
       try {
-        if (!isMounted.current) return;
+        if (!isMounted.current || !isAuthenticated || !userId) return;
 
         if (!valor || isNaN(valor) || valor <= 0) {
           Alert.alert("Erro", "Valor inválido.");
@@ -233,46 +265,56 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
                 text: "Continuar",
                 onPress: () => confirmarEAdicionarValor(metaId, valor, meta),
               },
-            ],
+            ]
           );
           return;
         }
 
         // Adicionar valor normalmente
-        confirmarEAdicionarValor(metaId, valor, meta);
+        await confirmarEAdicionarValor(metaId, valor, meta);
       } catch (error) {
         console.error("Erro ao adicionar valor na meta:", error);
         Alert.alert("Erro", "Ocorreu um erro ao adicionar o valor.");
       }
     },
-    [metas, confirmarEAdicionarValor],
+    [metas, confirmarEAdicionarValor, isAuthenticated, userId]
   );
 
   // Excluir meta
-  const excluirMeta = useCallback((metaId: string) => {
-    if (!isMounted.current) return;
+  const excluirMeta = useCallback(
+    async (metaId: number | string) => {
+      if (!isMounted.current || !isAuthenticated || !userId) return;
 
-    Alert.alert(
-      "Confirmar exclusão",
-      "Tem certeza que deseja excluir esta meta?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Excluir",
-          style: "destructive",
-          onPress: () => {
-            try {
-              setMetas((prev) => prev.filter((m) => m.id !== metaId));
-              Alert.alert("Sucesso", "Meta excluída!");
-            } catch (error) {
-              console.error("Erro ao excluir meta:", error);
-              Alert.alert("Erro", "Não foi possível excluir a meta.");
-            }
+      Alert.alert(
+        "Confirmar exclusão",
+        "Tem certeza que deseja excluir esta meta?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          {
+            text: "Excluir",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await metasService.delete(metaId);
+                setMetas((prev) => prev.filter((m) => m.id !== metaId));
+                setError(null);
+                Alert.alert("Sucesso", "Meta excluída!");
+              } catch (error) {
+                console.error("Erro ao excluir meta:", error);
+                const errorMsg =
+                  error instanceof Error
+                    ? error.message
+                    : "Não foi possível excluir a meta.";
+                setError(errorMsg);
+                Alert.alert("Erro", errorMsg);
+              }
+            },
           },
-        },
-      ],
-    );
-  }, []);
+        ]
+      );
+    },
+    [isAuthenticated, userId]
+  );
 
   // Memoizar o valor do contexto para evitar re-renders desnecessários
   const contextValue = useMemo(
@@ -282,14 +324,22 @@ export function MetasProvider({ children }: { children: React.ReactNode }) {
       adicionarValorNaMeta,
       excluirMeta,
       carregarMetas,
+      isLoading,
+      error,
     }),
-    [metas, adicionarMeta, adicionarValorNaMeta, excluirMeta, carregarMetas],
+    [
+      metas,
+      adicionarMeta,
+      adicionarValorNaMeta,
+      excluirMeta,
+      carregarMetas,
+      isLoading,
+      error,
+    ],
   );
 
   return (
-    <MetasContext.Provider value={contextValue}>
-      {children}
-    </MetasContext.Provider>
+    <MetasContext.Provider value={contextValue}>{children}</MetasContext.Provider>
   );
 }
 

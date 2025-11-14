@@ -25,6 +25,8 @@ type User = {
 type AuthContextData = {
   isAuthenticated: boolean; // Indica se o usuário está logado
   user: User | null; // Guarda os dados do usuário logado
+  token: string | null; // Token JWT do usuário
+  userId: number | undefined; // ID do usuário logado
   signIn: (token: string, user: User) => Promise<void>; // Função para logar
   signOut: () => Promise<void>; // Função para sair
 };
@@ -41,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Estado que guarda as informações do usuário logado
   const [user, setUser] = useState<User | null>(null);
+
+  // Estado que guarda o token JWT
+  const [token, setToken] = useState<string | null>(null);
 
   // useRef usado como flag para garantir que o efeito de carregamento rode apenas uma vez
   const hasLoaded = useRef(false);
@@ -79,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ) {
               if (isMounted.current) {
                 setUser(parsedUser); // Armazena no estado
+                setToken(token); // Armazena o token
                 setIsAuthenticated(true); // Define que está autenticado
               }
             } else {
@@ -152,11 +158,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Atualiza os estados locais
       setUser(userData);
+      setToken(token.trim());
       setIsAuthenticated(true);
     } catch (error) {
       // Caso algo dê errado, faz limpeza e mostra erro
       console.error("Erro ao realizar login:", error);
       setUser(null);
+      setToken(null);
       setIsAuthenticated(false);
       try {
         await Promise.all([
@@ -175,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Limpa os estados locais primeiro para feedback imediato
       setUser(null);
+      setToken(null);
       setIsAuthenticated(false);
 
       // Remove token e usuário do armazenamento local
@@ -187,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Erro ao fazer logout:", error);
       // Garante que os estados estejam limpos mesmo com erro
       setUser(null);
+      setToken(null);
       setIsAuthenticated(false);
       // Não relançar o erro, pois o logout deve sempre limpar o estado
     }
@@ -197,10 +207,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       isAuthenticated,
       user,
+      token,
+      userId: user?.id,
       signIn,
       signOut,
     }),
-    [isAuthenticated, user, signIn, signOut],
+    [isAuthenticated, user, token, signIn, signOut],
   );
 
   // Retorna o provedor do contexto, permitindo que toda a árvore de componentes acesse as informações de autenticação
